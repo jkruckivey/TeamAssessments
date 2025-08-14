@@ -453,59 +453,59 @@ Team Delta</pre>
                 tbody.innerHTML = teamStats.map((team, index) => {
                     const scoreClass = this.getScoreClass(parseFloat(team.totalScore));
                     
-                    return \`
+                    return `
                         <tr>
-                            <td class="team-name">\${team.teamName}</td>
-                            <td class="score-cell \${this.getScoreClass(parseFloat(team.averages.complexity))}">\${team.averages.complexity}</td>
-                            <td class="score-cell \${this.getScoreClass(parseFloat(team.averages.storytelling))}">\${team.averages.storytelling}</td>
-                            <td class="score-cell \${this.getScoreClass(parseFloat(team.averages.actionPlan))}">\${team.averages.actionPlan}</td>
-                            <td class="score-cell \${this.getScoreClass(parseFloat(team.averages.overall))}">\${team.averages.overall}</td>
-                            <td class="score-cell \${scoreClass}"><strong>\${team.totalScore}%</strong></td>
-                            <td class="judge-count">\${team.judgeCount}</td>
+                            <td class="team-name">${team.teamName}</td>
+                            <td class="score-cell ${this.getScoreClass(parseFloat(team.averages.complexity))}">${team.averages.complexity}</td>
+                            <td class="score-cell ${this.getScoreClass(parseFloat(team.averages.storytelling))}">${team.averages.storytelling}</td>
+                            <td class="score-cell ${this.getScoreClass(parseFloat(team.averages.actionPlan))}">${team.averages.actionPlan}</td>
+                            <td class="score-cell ${this.getScoreClass(parseFloat(team.averages.overall))}">${team.averages.overall}</td>
+                            <td class="score-cell ${scoreClass}"><strong>${team.totalScore}%</strong></td>
+                            <td class="judge-count">${team.judgeCount}</td>
                             <td>
-                                <button class="expand-btn" onclick="toggleDetails(\${index})">
+                                <button class="expand-btn" onclick="toggleDetails(${index})">
                                     View Details
                                 </button>
                             </td>
                         </tr>
-                        <tr id="details-\${index}" class="detailed-view">
+                        <tr id="details-${index}" class="detailed-view">
                             <td colspan="8">
                                 <h4>Individual Judge Assessments</h4>
-                                \${this.renderTeamDetails(team.assessments)}
+                                ${this.renderTeamDetails(team.assessments)}
                             </td>
                         </tr>
-                    \`;
+                    `;
                 }).join('');
             }
 
             renderTeamDetails(assessments) {
-                return assessments.map(assessment => \`
+                return assessments.map(assessment => `
                     <div class="judge-assessment">
-                        <div class="judge-name">Judge: \${assessment.judgeName}</div>
+                        <div class="judge-name">Judge: ${assessment.judgeName}</div>
                         <div class="assessment-scores">
                             <div class="score-item">
                                 <span class="score-label">System Complexity:</span>
-                                <span class="score-value">\${assessment.ratings.complexity}/5</span>
+                                <span class="score-value">${assessment.ratings.complexity}/5</span>
                             </div>
                             <div class="score-item">
                                 <span class="score-label">Clear Storytelling:</span>
-                                <span class="score-value">\${assessment.ratings.storytelling}/5</span>
+                                <span class="score-value">${assessment.ratings.storytelling}/5</span>
                             </div>
                             <div class="score-item">
                                 <span class="score-label">Systems Action Plan:</span>
-                                <span class="score-value">\${assessment.ratings.actionPlan}/5</span>
+                                <span class="score-value">${assessment.ratings.actionPlan}/5</span>
                             </div>
                             <div class="score-item">
                                 <span class="score-label">Overall Assessment:</span>
-                                <span class="score-value">\${assessment.ratings.overall}/5</span>
+                                <span class="score-value">${assessment.ratings.overall}/5</span>
                             </div>
                         </div>
-                        \${this.renderComments(assessment.comments)}
+                        ${this.renderComments(assessment.comments)}
                         <div style="font-size: 0.875rem; color: #666666; margin-top: 1rem;">
-                            Submitted: \${new Date(assessment.submittedAt).toLocaleString()}
+                            Submitted: ${new Date(assessment.submittedAt).toLocaleString()}
                         </div>
                     </div>
-                \`).join('');
+                `).join('');
             }
 
             renderComments(comments) {
@@ -520,16 +520,16 @@ Team Delta</pre>
                     return '<div style="color: #999; font-style: italic; margin-top: 1rem;">No comments provided</div>';
                 }
                 
-                return \`
+                return `
                     <div class="comments-section">
-                        \${commentItems.map(item => \`
+                        ${commentItems.map(item => `
                             <div class="comment-item">
-                                <div class="comment-label">\${item.label}:</div>
-                                <div class="comment-text">\${item.text}</div>
+                                <div class="comment-label">${item.label}:</div>
+                                <div class="comment-text">${item.text}</div>
                             </div>
-                        \`).join('')}
+                        `).join('')}
                     </div>
-                \`;
+                `;
             }
 
             getScoreClass(score) {
@@ -665,7 +665,7 @@ Team Delta</pre>
 
         // Global function for toggling details
         function toggleDetails(index) {
-            const detailsRow = document.getElementById(\`details-\${index}\`);
+            const detailsRow = document.getElementById(`details-${index}`);
             const isVisible = detailsRow.style.display === 'table-row';
             
             if (isVisible) {
