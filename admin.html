@@ -407,7 +407,7 @@ Team Delta</pre>
                     document.getElementById('loading').style.display = 'block';
                     document.getElementById('dashboard').style.display = 'none';
 
-                    const response = await fetch('/api/analytics');
+                    const response = await fetch(/api/analytics?group=);
                     const data = await response.json();
 
                     this.displayAnalytics(data);
@@ -585,7 +585,7 @@ Team Delta</pre>
                     const formData = new FormData();
                     formData.append('csvFile', file);
                     
-                    const response = await fetch('/api/teams/upload', {
+                    const response = await fetch(/api/teams/upload?group=, {
                         method: 'POST',
                         body: formData
                     });
@@ -681,6 +681,75 @@ Team Delta</pre>
         document.addEventListener('DOMContentLoaded', () => {
             new AssessmentAnalytics();
         });
+    </script>
+    <script>
+      (function(){
+        function getGroupFromUrl(){
+          const p = new URLSearchParams(window.location.search);
+          return (p.get('group') || 'default').trim();
+        }
+        function currentGroup(){
+          const el = document.getElementById('group-slug');
+          const v = el && el.value && el.value.trim();
+          return v || getGroupFromUrl() || 'default';
+        }
+        function ensureGroupInput(){
+          const fileInput = document.getElementById('csv-file');
+          const fileDiv = fileInput && fileInput.parentElement;
+          if (!fileDiv) return;
+          if (document.getElementById('group-slug')) return;
+          const wrap = document.createElement('div');
+          wrap.style.display='flex';
+          wrap.style.alignItems='center';
+          wrap.style.gap='1rem';
+          wrap.style.marginBottom='1rem';
+          const label = document.createElement('label');
+          label.htmlFor='group-slug';
+          label.style.fontWeight='600';
+          label.textContent='Group:';
+          const input = document.createElement('input');
+          input.type='text';
+          input.id='group-slug';
+          input.placeholder='default';
+          input.style.cssText='padding:0.5rem;border:2px solid #e5e5e5;';
+          input.value = getGroupFromUrl();
+          input.addEventListener('change', function(){
+            const refresh = document.getElementById('refresh-data');
+            if (refresh) refresh.click();
+          });
+          wrap.appendChild(label);
+          wrap.appendChild(input);
+          fileDiv.parentNode.insertBefore(wrap, fileDiv);
+        }
+        const origFetch = window.fetch.bind(window);
+        window.fetch = function(url, options){
+          try {
+            let u = url;
+            const g = encodeURIComponent(currentGroup());
+            if (typeof url === 'string') {
+              if (url.startsWith('/api/analytics') && url.indexOf('group=') === -1) {
+                u = url + (url.indexOf('?') !== -1 ? '&' : '?') + 'group=' + g;
+              } else if (url.startsWith('/api/teams/upload') && url.indexOf('group=') === -1) {
+                u = url + (url.indexOf('?') !== -1 ? '&' : '?') + 'group=' + g;
+              }
+            }
+            return origFetch(u, options);
+          } catch(e){
+            return origFetch(url, options);
+          }
+        };
+        document.addEventListener('DOMContentLoaded', function(){
+          ensureGroupInput();
+          document.querySelectorAll('a[href="/"]').forEach(function(a){
+            try {
+              const g = currentGroup();
+              const url = new URL(a.getAttribute('href'), window.location.origin);
+              url.searchParams.set('group', g);
+              a.setAttribute('href', url.pathname + url.search);
+            } catch(e) {}
+          });
+        });
+      })();
     </script>
 </body>
 </html>

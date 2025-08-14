@@ -124,7 +124,7 @@ class TeamAssessmentForm {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify({ ...data, group: getGroupFromUrl() })
         });
         
         if (!response.ok) {
@@ -221,7 +221,7 @@ class TeamAssessmentForm {
 class TeamManager {
     static async loadTeams() {
         try {
-            const response = await fetch('/api/teams');
+            const response = await fetch(`/api/teams?group=${encodeURIComponent(getGroupFromUrl())}`);
             const teams = await response.json();
             return teams;
         } catch (error) {
@@ -317,7 +317,7 @@ class TeamAutocomplete {
 }
 
 // Initialize the application when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {\n    const adminLink = document.querySelector('.admin-link');\n    if (adminLink) {\n      const g = getGroupFromUrl();\n      const url = new URL(adminLink.getAttribute('href'), window.location.origin);\n      url.searchParams.set('group', g);\n      adminLink.setAttribute('href', url.pathname + url.search);\n    }
     new TeamAssessmentForm();
     new TeamAutocomplete();
     
