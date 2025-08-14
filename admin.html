@@ -297,7 +297,7 @@
 
         <div id="loading" class="loading-admin">Loading assessment data...</div>
         
-        <div id="dashboard" style="display: block;">
+        <div id="dashboard" style="display: none;">
             <div class="dashboard-grid">
                 <div class="dashboard-card">
                     <div class="stat-number" id="total-assessments">0</div>
@@ -315,6 +315,34 @@
                     <div class="stat-number" id="average-score">0%</div>
                     <div class="stat-label">Average Score</div>
                 </div>
+            </div>
+
+            <!-- Enhanced Analytics Section -->
+            <div id="analytics-extras" style="padding: 0 2rem 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+                <div id="criterion-averages" class="dashboard-card" style="text-align:left;">
+                    <h3 style="margin-bottom:0.75rem;color:#2c2c2c;">Per-Criterion Averages</h3>
+                    <div id="criterion-averages-body"></div>
+                </div>
+                
+                <div id="top-teams" class="dashboard-card" style="text-align:left;">
+                    <h3 style="margin-bottom:0.75rem;color:#2c2c2c;">Top 5 Teams</h3>
+                    <ol id="top-teams-list" style="margin-left:1.25rem;"></ol>
+                </div>
+                
+                <div id="coverage-gaps" class="dashboard-card" style="text-align:left;">
+                    <h3 style="margin-bottom:0.75rem;color:#2c2c2c;">Teams With No Assessments</h3>
+                    <ul id="coverage-gaps-list" style="margin-left:1.25rem;"></ul>
+                </div>
+                
+                <div id="score-distribution" class="dashboard-card" style="text-align:left;">
+                    <h3 style="margin-bottom:0.75rem;color:#2c2c2c;">Score Distribution (1–5)</h3>
+                    <div id="score-distribution-body"></div>
+                </div>
+            </div>
+
+            <div id="recent-submissions" style="padding: 0 2rem 2rem;">
+                <h2>Recent Submissions</h2>
+                <div id="recent-submissions-body" style="background:#fafaf8; border:1px solid #e5e5e5; padding:1rem;"></div>
             </div>
 
             <div class="team-results">
@@ -407,11 +435,19 @@ Team Delta</pre>
                     document.getElementById('loading').style.display = 'block';
                     document.getElementById('dashboard').style.display = 'none';
 
-                    const __grpA = (document.getElementById('group-slug') && document.getElementById('group-slug').value.trim()) || (new URLSearchParams(window.location.search).get('group') || 'default').trim();
-                    const response = await fetch(`/api/analytics?group=${encodeURIComponent(__grpA)}`);
-                    const data = await response.json();
+                    const group = this.getCurrentGroup();
+                    const [analyticsResponse, teamsResponse, assessmentsResponse] = await Promise.all([
+                        fetch(`/api/analytics?group=${encodeURIComponent(group)}`),
+                        fetch(`/api/teams?group=${encodeURIComponent(group)}`),
+                        fetch(`/api/assessments?group=${encodeURIComponent(group)}`)
+                    ]);
 
-                    this.displayAnalytics(data);
+                    const analytics = await analyticsResponse.json();
+                    const teams = await teamsResponse.json();
+                    const assessments = await assessmentsResponse.json();
+
+                    this.displayAnalytics(analytics);
+                    this.renderEnhancedAnalytics(analytics, teams, assessments);
                     
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('dashboard').style.display = 'block';
@@ -420,6 +456,15 @@ Team Delta</pre>
                     console.error('Error loading analytics:', error);
                     document.getElementById('loading').innerHTML = 'Error loading assessment data. Please try again.';
                 }
+            }
+
+            getCurrentGroup() {
+                const groupInput = document.getElementById('group-slug');
+                if (groupInput && groupInput.value.trim()) {
+                    return groupInput.value.trim();
+                }
+                const params = new URLSearchParams(window.location.search);
+                return params.get('group') || 'default';
             }
 
             displayAnalytics(data) {
@@ -436,6 +481,139 @@ Team Delta</pre>
 
                 // Display team results
                 this.displayTeamResults(data.teamStats || []);
+            }
+
+            renderEnhancedAnalytics(analytics, teams, assessments) {
+                this.renderCriterionAverages(analytics);
+                this.renderTopTeams(analytics);
+                this.renderCoverage(analytics, teams);
+                this.renderScoreDistribution(assessments);
+                this.renderRecent(assessments);
+            }
+
+            renderCriterionAverages(analytics) {
+                const body = document.getElementById('criterion-averages-body');
+                if (!body) return;
+                
+                const totals = { complexity: 0, storytelling: 0, actionPlan: 0, overall: 0 };
+                let count = 0;
+                
+                (analytics.teamStats || []).forEach(team => {
+                    const n = team.judgeCount || 0;
+                    totals.complexity += parseFloat(team.averages.complexity) * n;
+                    totals.storytelling += parseFloat(team.averages.storytelling) * n;
+                    totals.actionPlan += parseFloat(team.averages.actionPlan) * n;
+                    totals.overall += parseFloat(team.averages.overall) * n;
+                    count += n;
+                });
+                
+                if (count === 0) {
+                    body.innerHTML = '<em>No data yet.</em>';
+                    return;
+                }
+                
+                const avg = {
+                    complexity: (totals.complexity / count).toFixed(2),
+                    storytelling: (totals.storytelling / count).toFixed(2),
+                    actionPlan: (totals.actionPlan / count).toFixed(2),
+                    overall: (totals.overall / count).toFixed(2)
+                };
+                
+                body.innerHTML = `
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.5rem;">
+                      <div><strong>Complexity</strong><div>${avg.complexity}</div></div>
+                      <div><strong>Storytelling</strong><div>${avg.storytelling}</div></div>
+                      <div><strong>Action Plan</strong><div>${avg.actionPlan}</div></div>
+                      <div><strong>Overall</strong><div>${avg.overall}</div></div>
+                    </div>`;
+            }
+
+            renderTopTeams(analytics) {
+                const list = document.getElementById('top-teams-list');
+                if (!list) return;
+                
+                const top = (analytics.teamStats || []).slice(0, 5);
+                if (top.length === 0) {
+                    list.innerHTML = '<li><em>No data yet.</em></li>';
+                    return;
+                }
+                
+                list.innerHTML = top.map(t => 
+                    `<li><strong>${t.teamName}</strong> – ${t.totalScore}% <span style="color:#666">(${t.judgeCount} judges)</span></li>`
+                ).join('');
+            }
+
+            renderCoverage(analytics, teams) {
+                const ul = document.getElementById('coverage-gaps-list');
+                if (!ul) return;
+                
+                const have = new Set((analytics.teamStats || []).map(t => t.teamName.toLowerCase()));
+                const gaps = (teams || []).filter(t => !have.has((t.name || '').toLowerCase()));
+                
+                if (gaps.length === 0) {
+                    ul.innerHTML = '<li><em>All teams covered</em></li>';
+                    return;
+                }
+                
+                ul.innerHTML = gaps.slice(0, 20).map(t => `<li>${t.name}</li>`).join('');
+            }
+
+            renderScoreDistribution(assessments) {
+                const el = document.getElementById('score-distribution-body');
+                if (!el) return;
+                
+                const criteria = ['complexity', 'storytelling', 'actionPlan', 'overall'];
+                const dist = {
+                    complexity: [0, 0, 0, 0, 0],
+                    storytelling: [0, 0, 0, 0, 0],
+                    actionPlan: [0, 0, 0, 0, 0],
+                    overall: [0, 0, 0, 0, 0]
+                };
+                
+                (assessments || []).forEach(a => {
+                    criteria.forEach(c => {
+                        const v = parseInt(a.ratings[c]);
+                        if (v >= 1 && v <= 5) dist[c][v - 1]++;
+                    });
+                });
+                
+                const createRow = c => `<tr><th style="text-align:left;padding:.25rem .5rem;">${c}</th>` +
+                    dist[c].map((n, i) => `<td style="padding:.25rem .5rem;text-align:center;">${n}</td>`).join('') +
+                    '</tr>';
+                
+                el.innerHTML = `
+                    <table style="width:100%;border-collapse:collapse;background:#fff">
+                        <thead>
+                            <tr><th></th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
+                        </thead>
+                        <tbody>
+                            ${criteria.map(createRow).join('')}
+                        </tbody>
+                    </table>`;
+            }
+
+            renderRecent(assessments) {
+                const host = document.getElementById('recent-submissions-body');
+                if (!host) return;
+                
+                const items = (assessments || [])
+                    .slice()
+                    .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))
+                    .slice(0, 10);
+                
+                if (items.length === 0) {
+                    host.innerHTML = '<em>No submissions yet.</em>';
+                    return;
+                }
+                
+                host.innerHTML = items.map(a => {
+                    const total = (((a.ratings.complexity + a.ratings.storytelling + a.ratings.actionPlan + a.ratings.overall) / 20) * 100).toFixed(1);
+                    return `
+                        <div style="display:flex;justify-content:space-between;border-bottom:1px solid #e5e5e5;padding:.5rem 0;">
+                            <div><strong>${a.teamName}</strong> – ${total}%</div>
+                            <div style="color:#666">${a.judgeName} • ${new Date(a.submittedAt).toLocaleString()}</div>
+                        </div>`;
+                }).join('');
             }
 
             displayTeamResults(teamStats) {
@@ -541,7 +719,8 @@ Team Delta</pre>
 
             async exportCSV() {
                 try {
-                    const response = await fetch('/api/export/csv');
+                    const group = this.getCurrentGroup();
+                    const response = await fetch(`/api/export/csv?group=${encodeURIComponent(group)}`);
                     if (response.ok) {
                         const blob = await response.blob();
                         const url = window.URL.createObjectURL(blob);
@@ -586,8 +765,8 @@ Team Delta</pre>
                     const formData = new FormData();
                     formData.append('csvFile', file);
                     
-                    const __grpU = (document.getElementById('group-slug') && document.getElementById('group-slug').value.trim()) || (new URLSearchParams(window.location.search).get('group') || 'default').trim();
-                    const response = await fetch(`/api/teams/upload?group=${encodeURIComponent(__grpU)}`, {
+                    const group = this.getCurrentGroup();
+                    const response = await fetch(`/api/teams/upload?group=${encodeURIComponent(group)}`, {
                         method: 'POST',
                         body: formData
                     });
@@ -598,10 +777,10 @@ Team Delta</pre>
                         // Success
                         let message = `✅ ${result.message}`;
                         if (result.newTeams && result.newTeams.length > 0) {
-                            message += `\\n\\nNew teams added:\\n${result.newTeams.map(t => '• ' + t.name).join('\\n')}`;
+                            message += `\n\nNew teams added:\n${result.newTeams.map(t => '• ' + t.name).join('\n')}`;
                         }
                         if (result.duplicates && result.duplicates.length > 0) {
-                            message += `\\n\\nDuplicates skipped:\\n${result.duplicates.map(t => '• ' + t).join('\\n')}`;
+                            message += `\n\nDuplicates skipped:\n${result.duplicates.map(t => '• ' + t).join('\n')}`;
                         }
                         
                         this.showUploadStatus(message, 'success');
@@ -616,10 +795,10 @@ Team Delta</pre>
                         // Error
                         let errorMessage = result.error;
                         if (result.details && Array.isArray(result.details)) {
-                            errorMessage += '\\n\\nDetails:\\n' + result.details.join('\\n');
+                            errorMessage += '\n\nDetails:\n' + result.details.join('\n');
                         }
                         if (result.expectedFormat) {
-                            errorMessage += '\\n\\n' + result.expectedFormat;
+                            errorMessage += '\n\n' + result.expectedFormat;
                         }
                         this.showUploadStatus(errorMessage, 'error');
                     }
@@ -684,6 +863,8 @@ Team Delta</pre>
             new AssessmentAnalytics();
         });
     </script>
+
+    <!-- Group Management Script -->
     <script>
       (function(){
         function getGroupFromUrl(){
@@ -723,23 +904,7 @@ Team Delta</pre>
           wrap.appendChild(input);
           fileDiv.parentNode.insertBefore(wrap, fileDiv);
         }
-        const origFetch = window.fetch.bind(window);
-        window.fetch = function(url, options){
-          try {
-            let u = url;
-            const g = encodeURIComponent(currentGroup());
-            if (typeof url === 'string') {
-              if (url.startsWith('/api/analytics') && url.indexOf('group=') === -1) {
-                u = url + (url.indexOf('?') !== -1 ? '&' : '?') + 'group=' + g;
-              } else if (url.startsWith('/api/teams/upload') && url.indexOf('group=') === -1) {
-                u = url + (url.indexOf('?') !== -1 ? '&' : '?') + 'group=' + g;
-              }
-            }
-            return origFetch(u, options);
-          } catch(e){
-            return origFetch(url, options);
-          }
-        };
+        
         document.addEventListener('DOMContentLoaded', function(){
           ensureGroupInput();
           document.querySelectorAll('a[href="/"]').forEach(function(a){
@@ -753,6 +918,8 @@ Team Delta</pre>
         });
       })();
     </script>
+
+    <!-- Share Links Script -->
     <script>
       document.addEventListener('DOMContentLoaded', function(){
         function getGroupFromUrl(){
@@ -836,5 +1003,5 @@ Team Delta</pre>
         if (gi) gi.addEventListener('input', setShareLinks);
       });
     </script>
-  </body>
+</body>
 </html>
