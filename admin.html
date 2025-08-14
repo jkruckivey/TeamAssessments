@@ -407,7 +407,8 @@ Team Delta</pre>
                     document.getElementById('loading').style.display = 'block';
                     document.getElementById('dashboard').style.display = 'none';
 
-                    const response = await fetch(/api/analytics?group=);
+                    const __grpA = (document.getElementById('group-slug') && document.getElementById('group-slug').value.trim()) || (new URLSearchParams(window.location.search).get('group') || 'default').trim();
+                    const response = await fetch(`/api/analytics?group=${encodeURIComponent(__grpA)}`);
                     const data = await response.json();
 
                     this.displayAnalytics(data);
@@ -585,7 +586,8 @@ Team Delta</pre>
                     const formData = new FormData();
                     formData.append('csvFile', file);
                     
-                    const response = await fetch(/api/teams/upload?group=, {
+                    const __grpU = (document.getElementById('group-slug') && document.getElementById('group-slug').value.trim()) || (new URLSearchParams(window.location.search).get('group') || 'default').trim();
+                    const response = await fetch(`/api/teams/upload?group=${encodeURIComponent(__grpU)}`, {
                         method: 'POST',
                         body: formData
                     });
