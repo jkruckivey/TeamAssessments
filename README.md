@@ -254,3 +254,28 @@ For technical support or feature requests:
 
 **Built for Ivey Business School EdTech Lab**  
 Professional team assessment platform designed for academic evaluation excellence.
+## Render Deployment (Persistent Data)
+
+To host on Render with data persistence:
+
+1. Push this repo to GitHub (if not already).
+2. On Render: New ? Web Service ? select the repo.
+3. Build command: `npm install`
+4. Start command: `npm start`
+5. Environment variables:
+   - `NODE_ENV=production`
+   - `PORT=3000`
+   - `DATA_DIR=/opt/render/project/src/data`
+   - Optional: `EMAIL_USER`, `EMAIL_PASS` (for email notifications)
+6. Add a Persistent Disk:
+   - Size: e.g., 1 GB
+   - Mount path: `/opt/render/project/src/data`
+
+Access URLs:
+- Form: `https://<your-service>.onrender.com/`
+- Admin: `https://<your-service>.onrender.com/admin`
+
+Notes:
+- The server now reads/writes JSON under `DATA_DIR` in all environments.
+- If you change the mount path, update `DATA_DIR` accordingly.
+- Consider protecting `/admin` with basic auth or a token before public access.
