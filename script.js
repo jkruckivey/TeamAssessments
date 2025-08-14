@@ -1,3 +1,10 @@
+// Helper to read group slug from URL
+function getGroupFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const g = (params.get('group') || 'default').trim();
+    return g || 'default';
+}
+
 class TeamAssessmentForm {
     constructor() {
         this.form = document.getElementById('assessment-form');
@@ -317,12 +324,19 @@ class TeamAutocomplete {
 }
 
 // Initialize the application when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {\n    const adminLink = document.querySelector('.admin-link');\n    if (adminLink) {\n      const g = getGroupFromUrl();\n      const url = new URL(adminLink.getAttribute('href'), window.location.origin);\n      url.searchParams.set('group', g);\n      adminLink.setAttribute('href', url.pathname + url.search);\n    }
+document.addEventListener('DOMContentLoaded', () => {
+    const adminLink = document.querySelector('.admin-link');
+    if (adminLink) {
+        const g = getGroupFromUrl();
+        const url = new URL(adminLink.getAttribute('href'), window.location.origin);
+        url.searchParams.set('group', g);
+        adminLink.setAttribute('href', url.pathname + url.search);
+    }
     new TeamAssessmentForm();
     new TeamAutocomplete();
-    
+
     console.log('Team Assessment Form initialized');
-    
+
     // Check API health
     fetch('/api/health')
         .then(response => response.json())
