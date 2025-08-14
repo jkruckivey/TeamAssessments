@@ -4,6 +4,9 @@ const path = require('path');
 const fs = require('fs').promises;
 const { v4: uuidv4 } = require('uuid');
 const nodemailer = require('nodemailer');
+const multer = require('multer');
+const csv = require('csv-parser');
+const { Readable } = require('stream');
 require('dotenv').config();
 
 const app = express();
@@ -13,6 +16,21 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('.'));
+
+// Configure multer for file uploads
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only CSV files are allowed'), false);
+        }
+    }
+});
 
 // In-memory storage (for development - use database in production)
 let assessments = [];
@@ -178,6 +196,56 @@ async function sendAssessmentNotification(assessment) {
     }
 }
 
+// CSV Processing Functions
+async function parseCSV(buffer) {
+    return new Promise((resolve, reject) => {
+        const results = [];
+        const stream = Readable.from(buffer.toString());
+        
+        stream
+            .pipe(csv())
+            .on('data', (data) => results.push(data))
+            .on('end', () => resolve(results))
+            .on('error', (error) => reject(error));
+    });
+}
+
+function validateTeamData(data) {
+    const errors = [];
+    const validTeams = [];
+    const seenTeams = new Set();
+    
+    data.forEach((row, index) => {
+        const rowNum = index + 1;
+        
+        // Check for team name field (support multiple possible column names)
+        const teamName = row['team_name'] || row['teamName'] || row['Team Name'] || 
+                         row['name'] || row['Name'] || row['team'] || row['Team'];
+        
+        if (!teamName || !teamName.trim()) {
+            errors.push(`Row ${rowNum}: Missing team name`);
+            return;
+        }
+        
+        const cleanName = teamName.trim();
+        
+        if (seenTeams.has(cleanName.toLowerCase())) {
+            errors.push(`Row ${rowNum}: Duplicate team name "${cleanName}"`);
+            return;
+        }
+        
+        seenTeams.add(cleanName.toLowerCase());
+        validTeams.push({
+            id: uuidv4(),
+            name: cleanName,
+            createdAt: new Date().toISOString(),
+            source: 'csv_upload'
+        });
+    });
+    
+    return { errors, validTeams };
+}
+
 // Routes
 
 // Serve main assessment form
@@ -207,6 +275,79 @@ app.post('/api/teams', (req, res) => {
     teams.push(team);
     saveData();
     res.json(team);
+});
+
+// Upload teams from CSV
+app.post('/api/teams/upload', upload.single('csvFile'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No CSV file uploaded' });
+        }
+        
+        // Parse CSV
+        const csvData = await parseCSV(req.file.buffer);
+        
+        if (csvData.length === 0) {
+            return res.status(400).json({ 
+                error: 'CSV file is empty or invalid',
+                expectedFormat: 'CSV should have columns: team_name, teamName, Team Name, name, or Name'
+            });
+        }
+        
+        // Validate and process team data
+        const { errors, validTeams } = validateTeamData(csvData);
+        
+        if (errors.length > 0) {
+            return res.status(400).json({ 
+                error: 'Validation errors found',
+                details: errors,
+                validTeams: validTeams.length,
+                totalRows: csvData.length
+            });
+        }
+        
+        // Check for duplicates against existing teams
+        const existingTeamNames = new Set(teams.map(t => t.name.toLowerCase()));
+        const duplicates = [];
+        const newTeams = [];
+        
+        validTeams.forEach(team => {
+            if (existingTeamNames.has(team.name.toLowerCase())) {
+                duplicates.push(team.name);
+            } else {
+                newTeams.push(team);
+                existingTeamNames.add(team.name.toLowerCase());
+            }
+        });
+        
+        // Add new teams to the system
+        teams.push(...newTeams);
+        await saveData();
+        
+        const result = {
+            success: true,
+            message: `Successfully imported ${newTeams.length} teams`,
+            imported: newTeams.length,
+            duplicatesSkipped: duplicates.length,
+            totalProcessed: validTeams.length,
+            newTeams: newTeams.map(t => ({ name: t.name, id: t.id }))
+        };
+        
+        if (duplicates.length > 0) {
+            result.duplicates = duplicates;
+            result.message += ` (${duplicates.length} duplicates skipped)`;
+        }
+        
+        console.log(`📊 CSV Import: ${newTeams.length} teams added, ${duplicates.length} duplicates skipped`);
+        res.json(result);
+        
+    } catch (error) {
+        console.error('Error processing CSV upload:', error);
+        res.status(500).json({ 
+            error: 'Failed to process CSV file',
+            details: error.message
+        });
+    }
 });
 
 // Submit assessment

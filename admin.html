@@ -344,6 +344,33 @@
             </div>
 
             <div class="actions-section">
+                <h3 style="margin-bottom: 1.5rem; color: #2c2c2c;">Team Management</h3>
+                
+                <!-- CSV Upload Section -->
+                <div style="background: #fafaf8; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid #e5e5e5;">
+                    <h4 style="margin-bottom: 1rem; color: #2c2c2c;">Upload Teams from CSV</h4>
+                    <p style="font-size: 0.9rem; color: #666666; margin-bottom: 1rem;">
+                        Upload a CSV file containing team names. The CSV should have a column named: 
+                        <code>team_name</code>, <code>teamName</code>, <code>Team Name</code>, <code>name</code>, or <code>Name</code>
+                    </p>
+                    
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                        <input type="file" id="csv-file" accept=".csv" style="padding: 0.5rem; border: 2px solid #e5e5e5;">
+                        <button id="upload-csv" class="btn-admin" disabled>Upload Teams</button>
+                    </div>
+                    
+                    <div id="upload-status" style="display: none; padding: 1rem; margin-top: 1rem; border-radius: 4px;"></div>
+                    
+                    <details style="margin-top: 1rem;">
+                        <summary style="cursor: pointer; color: #c5b783; font-weight: 600;">CSV Format Example</summary>
+                        <pre style="background: white; padding: 1rem; margin-top: 0.5rem; border: 1px solid #e5e5e5; font-size: 0.875rem;">team_name
+Team Alpha
+Team Beta  
+Team Gamma
+Team Delta</pre>
+                    </details>
+                </div>
+                
                 <h3 style="margin-bottom: 1.5rem; color: #2c2c2c;">Export & Actions</h3>
                 <button id="refresh-data" class="btn-admin">Refresh Data</button>
                 <button id="export-csv" class="btn-admin">Export CSV</button>
@@ -363,6 +390,16 @@
                 document.getElementById('refresh-data').addEventListener('click', () => this.loadData());
                 document.getElementById('export-csv').addEventListener('click', () => this.exportCSV());
                 document.getElementById('generate-grades').addEventListener('click', () => this.generateGrades());
+                
+                // CSV Upload functionality
+                const csvFileInput = document.getElementById('csv-file');
+                const uploadButton = document.getElementById('upload-csv');
+                
+                csvFileInput.addEventListener('change', (e) => {
+                    uploadButton.disabled = !e.target.files.length;
+                });
+                
+                uploadButton.addEventListener('click', () => this.uploadCSV());
             }
 
             async loadData() {
@@ -525,6 +562,102 @@
 
             generateGrades() {
                 alert('Grade generation feature will calculate final grades based on assessment averages. This would typically integrate with your LMS or gradebook system.');
+            }
+
+            async uploadCSV() {
+                const fileInput = document.getElementById('csv-file');
+                const uploadStatus = document.getElementById('upload-status');
+                const uploadButton = document.getElementById('upload-csv');
+                
+                if (!fileInput.files.length) {
+                    this.showUploadStatus('Please select a CSV file first.', 'error');
+                    return;
+                }
+                
+                const file = fileInput.files[0];
+                
+                // Show loading state
+                uploadButton.disabled = true;
+                uploadButton.textContent = 'Uploading...';
+                this.showUploadStatus('Processing CSV file...', 'info');
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('csvFile', file);
+                    
+                    const response = await fetch('/api/teams/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        // Success
+                        let message = `✅ ${result.message}`;
+                        if (result.newTeams && result.newTeams.length > 0) {
+                            message += `\\n\\nNew teams added:\\n${result.newTeams.map(t => '• ' + t.name).join('\\n')}`;
+                        }
+                        if (result.duplicates && result.duplicates.length > 0) {
+                            message += `\\n\\nDuplicates skipped:\\n${result.duplicates.map(t => '• ' + t).join('\\n')}`;
+                        }
+                        
+                        this.showUploadStatus(message, 'success');
+                        
+                        // Clear file input
+                        fileInput.value = '';
+                        
+                        // Refresh data to show updated team count
+                        setTimeout(() => this.loadData(), 1000);
+                        
+                    } else {
+                        // Error
+                        let errorMessage = result.error;
+                        if (result.details && Array.isArray(result.details)) {
+                            errorMessage += '\\n\\nDetails:\\n' + result.details.join('\\n');
+                        }
+                        if (result.expectedFormat) {
+                            errorMessage += '\\n\\n' + result.expectedFormat;
+                        }
+                        this.showUploadStatus(errorMessage, 'error');
+                    }
+                    
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    this.showUploadStatus('Upload failed: ' + error.message, 'error');
+                    
+                } finally {
+                    uploadButton.disabled = false;
+                    uploadButton.textContent = 'Upload Teams';
+                }
+            }
+
+            showUploadStatus(message, type) {
+                const statusDiv = document.getElementById('upload-status');
+                statusDiv.style.display = 'block';
+                statusDiv.textContent = message;
+                
+                // Style based on type
+                if (type === 'success') {
+                    statusDiv.style.background = '#e8f5e8';
+                    statusDiv.style.border = '2px solid #4caf50';
+                    statusDiv.style.color = '#2e7d32';
+                } else if (type === 'error') {
+                    statusDiv.style.background = '#ffebee';
+                    statusDiv.style.border = '2px solid #f44336';
+                    statusDiv.style.color = '#c62828';
+                } else {
+                    statusDiv.style.background = '#e3f2fd';
+                    statusDiv.style.border = '2px solid #2196f3';
+                    statusDiv.style.color = '#1565c0';
+                }
+                
+                // Auto-hide after 8 seconds for success/info
+                if (type !== 'error') {
+                    setTimeout(() => {
+                        statusDiv.style.display = 'none';
+                    }, 8000);
+                }
             }
         }
 

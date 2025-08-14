@@ -1,1 +1,62 @@
-[]
+[
+  {
+    "id": "9f5c941f-fb0d-4508-951e-53d782f9da39",
+    "name": "Team Alpha",
+    "createdAt": "2025-08-14T17:36:32.119Z",
+    "source": "csv_upload"
+  },
+  {
+    "id": "be564c36-3b94-436f-845c-3bbb4cef5411",
+    "name": "Team Beta",
+    "createdAt": "2025-08-14T17:36:32.119Z",
+    "source": "csv_upload"
+  },
+  {
+    "id": "d96164bf-1fae-4782-8c56-b8eb2882fb14",
+    "name": "Team Gamma",
+    "createdAt": "2025-08-14T17:36:32.119Z",
+    "source": "csv_upload"
+  },
+  {
+    "id": "767f692d-03b3-4cf0-a570-2aa630d9f0fa",
+    "name": "Team Delta",
+    "createdAt": "2025-08-14T17:36:32.119Z",
+    "source": "csv_upload"
+  },
+  {
+    "id": "ff6213e3-73ae-43d8-9782-df04b28ad401",
+    "name": "Team Epsilon",
+    "createdAt": "2025-08-14T17:36:32.119Z",
+    "source": "csv_upload"
+  },
+  {
+    "id": "23c00b82-5721-483f-b1cb-6aae644305b3",
+    "name": "Innovation Squad",
+    "createdAt": "2025-08-14T17:36:32.119Z",
+    "source": "csv_upload"
+  },
+  {
+    "id": "e0e11063-2997-4d19-9154-d63985adbba6",
+    "name": "Strategic Thinkers",
+    "createdAt": "2025-08-14T17:36:32.119Z",
+    "source": "csv_upload"
+  },
+  {
+    "id": "5eb9839d-4852-4263-a036-86ddb343f35c",
+    "name": "Market Leaders",
+    "createdAt": "2025-08-14T17:36:32.119Z",
+    "source": "csv_upload"
+  },
+  {
+    "id": "48d9722c-76c5-4914-bb8d-39715cf57457",
+    "name": "System Architects",
+    "createdAt": "2025-08-14T17:36:32.119Z",
+    "source": "csv_upload"
+  },
+  {
+    "id": "ea7b8221-1eeb-42c1-b966-1cc6f0adf92c",
+    "name": "Future Builders",
+    "createdAt": "2025-08-14T17:36:32.120Z",
+    "source": "csv_upload"
+  }
+]
