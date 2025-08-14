@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment Analytics - Ivey EdTech Lab</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .admin-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding: 2rem;
+        }
+
+        .dashboard-card {
+            background: #fafaf8;
+            padding: 2rem;
+            border: 1px solid #e5e5e5;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #c5b783;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #666666;
+            font-size: 0.95rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .team-results {
+            padding: 0 2rem 2rem;
+        }
+
+        .team-results h2 {
+            font-size: 1.5rem;
+            color: #2c2c2c;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        .team-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+            background: white;
+        }
+
+        .team-table th,
+        .team-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .team-table th {
+            background: #c5b783;
+            color: #2c2c2c;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.875rem;
+        }
+
+        .team-table tr:hover {
+            background: #fafaf8;
+        }
+
+        .score-cell {
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .score-excellent {
+            color: #4caf50;
+        }
+
+        .score-good {
+            color: #8bc34a;
+        }
+
+        .score-average {
+            color: #ff9800;
+        }
+
+        .score-fair {
+            color: #f44336;
+        }
+
+        .judge-count {
+            text-align: center;
+            font-size: 0.875rem;
+            color: #666666;
+        }
+
+        .team-name {
+            font-weight: 600;
+            color: #2c2c2c;
+        }
+
+        .detailed-view {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f9f9f9;
+            border-left: 4px solid #c5b783;
+            display: none;
+        }
+
+        .detailed-view h4 {
+            margin-bottom: 1rem;
+            color: #2c2c2c;
+        }
+
+        .judge-assessment {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: white;
+            border: 1px solid #e5e5e5;
+        }
+
+        .judge-name {
+            font-weight: 600;
+            color: #c5b783;
+            margin-bottom: 0.5rem;
+        }
+
+        .assessment-scores {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            background: #fafaf8;
+        }
+
+        .score-label {
+            font-size: 0.875rem;
+            color: #666666;
+        }
+
+        .score-value {
+            font-weight: 600;
+            color: #2c2c2c;
+        }
+
+        .comments-section {
+            margin-top: 1rem;
+        }
+
+        .comment-item {
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .comment-label {
+            font-weight: 600;
+            color: #666666;
+        }
+
+        .comment-text {
+            color: #2c2c2c;
+            margin-left: 1rem;
+            font-style: italic;
+        }
+
+        .actions-section {
+            padding: 2rem;
+            border-top: 2px solid #c5b783;
+            background: #fafaf8;
+            text-align: center;
+        }
+
+        .btn-admin {
+            background: #c5b783;
+            color: #2c2c2c;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 0;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .btn-admin:hover {
+            background: #b8a56f;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #2c2c2c;
+            border: 2px solid #c5b783;
+        }
+
+        .btn-secondary:hover {
+            background: #c5b783;
+        }
+
+        .loading-admin {
+            text-align: center;
+            padding: 3rem;
+            color: #666666;
+            font-size: 1.1rem;
+        }
+
+        .expand-btn {
+            background: none;
+            border: none;
+            color: #c5b783;
+            cursor: pointer;
+            font-size: 0.875rem;
+            text-decoration: underline;
+            padding: 0;
+            margin: 0;
+        }
+
+        .expand-btn:hover {
+            color: #b8a56f;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 3rem;
+            color: #666666;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .admin-container {
+                margin: 0;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+
+            .team-results {
+                padding: 1rem;
+            }
+
+            .team-table {
+                font-size: 0.875rem;
+            }
+
+            .team-table th,
+            .team-table td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .assessment-scores {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <header style="background: #fff; border-bottom: 2px solid #c5b783; padding: 2rem 3rem; border-radius: 0; margin-bottom: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="font-size: 0.7rem; background: #c5b783; color: #2c2c2c; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 0; font-weight: 900; letter-spacing: 0.1em;">IVEY</div>
+                    <div>
+                        <h1 style="font-size: 1.75rem; color: #2c2c2c; margin: 0; font-weight: 700; letter-spacing: -0.025em;">Assessment Analytics</h1>
+                        <p style="font-size: 0.95rem; color: #666666; margin: 0; font-weight: 400;">Team Evaluation Results & Grade Assignment</p>
+                    </div>
+                </div>
+                <div>
+                    <a href="/" style="background: #c5b783; color: #2c2c2c; padding: 0.75rem 1.5rem; border-radius: 0; text-decoration: none; font-size: 0.875rem; font-weight: 600; border: none; text-transform: uppercase; letter-spacing: 0.05em;">← Back to Form</a>
+                </div>
+            </div>
+        </header>
+
+        <div id="loading" class="loading-admin">Loading assessment data...</div>
+        
+        <div id="dashboard" style="display: none;">
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="stat-number" id="total-assessments">0</div>
+                    <div class="stat-label">Total Assessments</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="stat-number" id="total-teams">0</div>
+                    <div class="stat-label">Teams Evaluated</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="stat-number" id="total-judges">0</div>
+                    <div class="stat-label">Active Judges</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="stat-number" id="average-score">0%</div>
+                    <div class="stat-label">Average Score</div>
+                </div>
+            </div>
+
+            <div class="team-results">
+                <h2>Team Assessment Results</h2>
+                <table class="team-table" id="results-table">
+                    <thead>
+                        <tr>
+                            <th>Team Name</th>
+                            <th>Complexity</th>
+                            <th>Storytelling</th>
+                            <th>Action Plan</th>
+                            <th>Overall</th>
+                            <th>Total Score</th>
+                            <th>Judges</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body">
+                        <!-- Results will be populated here -->
+                    </tbody>
+                </table>
+
+                <div id="no-results" class="no-data" style="display: none;">
+                    <p>No assessment data available yet.</p>
+                    <p>Assessments will appear here once judges start submitting evaluations.</p>
+                </div>
+            </div>
+
+            <div class="actions-section">
+                <h3 style="margin-bottom: 1.5rem; color: #2c2c2c;">Export & Actions</h3>
+                <button id="refresh-data" class="btn-admin">Refresh Data</button>
+                <button id="export-csv" class="btn-admin">Export CSV</button>
+                <button id="generate-grades" class="btn-secondary">Generate Final Grades</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AssessmentAnalytics {
+            constructor() {
+                this.loadData();
+                this.bindEvents();
+            }
+
+            bindEvents() {
+                document.getElementById('refresh-data').addEventListener('click', () => this.loadData());
+                document.getElementById('export-csv').addEventListener('click', () => this.exportCSV());
+                document.getElementById('generate-grades').addEventListener('click', () => this.generateGrades());
+            }
+
+            async loadData() {
+                try {
+                    document.getElementById('loading').style.display = 'block';
+                    document.getElementById('dashboard').style.display = 'none';
+
+                    const response = await fetch('/api/analytics');
+                    const data = await response.json();
+
+                    this.displayAnalytics(data);
+                    
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Error loading analytics:', error);
+                    document.getElementById('loading').innerHTML = 'Error loading assessment data. Please try again.';
+                }
+            }
+
+            displayAnalytics(data) {
+                // Update dashboard stats
+                document.getElementById('total-assessments').textContent = data.totalAssessments || 0;
+                document.getElementById('total-teams').textContent = data.totalTeams || 0;
+                document.getElementById('total-judges').textContent = data.judgeList?.length || 0;
+                
+                // Calculate average score across all teams
+                const averageScore = data.teamStats?.length > 0 
+                    ? (data.teamStats.reduce((sum, team) => sum + parseFloat(team.totalScore), 0) / data.teamStats.length).toFixed(1)
+                    : 0;
+                document.getElementById('average-score').textContent = averageScore + '%';
+
+                // Display team results
+                this.displayTeamResults(data.teamStats || []);
+            }
+
+            displayTeamResults(teamStats) {
+                const tbody = document.getElementById('results-body');
+                const noResults = document.getElementById('no-results');
+                
+                if (teamStats.length === 0) {
+                    tbody.innerHTML = '';
+                    noResults.style.display = 'block';
+                    return;
+                }
+                
+                noResults.style.display = 'none';
+                
+                tbody.innerHTML = teamStats.map((team, index) => {
+                    const scoreClass = this.getScoreClass(parseFloat(team.totalScore));
+                    
+                    return \`
+                        <tr>
+                            <td class="team-name">\${team.teamName}</td>
+                            <td class="score-cell \${this.getScoreClass(parseFloat(team.averages.complexity))}">\${team.averages.complexity}</td>
+                            <td class="score-cell \${this.getScoreClass(parseFloat(team.averages.storytelling))}">\${team.averages.storytelling}</td>
+                            <td class="score-cell \${this.getScoreClass(parseFloat(team.averages.actionPlan))}">\${team.averages.actionPlan}</td>
+                            <td class="score-cell \${this.getScoreClass(parseFloat(team.averages.overall))}">\${team.averages.overall}</td>
+                            <td class="score-cell \${scoreClass}"><strong>\${team.totalScore}%</strong></td>
+                            <td class="judge-count">\${team.judgeCount}</td>
+                            <td>
+                                <button class="expand-btn" onclick="toggleDetails(\${index})">
+                                    View Details
+                                </button>
+                            </td>
+                        </tr>
+                        <tr id="details-\${index}" class="detailed-view">
+                            <td colspan="8">
+                                <h4>Individual Judge Assessments</h4>
+                                \${this.renderTeamDetails(team.assessments)}
+                            </td>
+                        </tr>
+                    \`;
+                }).join('');
+            }
+
+            renderTeamDetails(assessments) {
+                return assessments.map(assessment => \`
+                    <div class="judge-assessment">
+                        <div class="judge-name">Judge: \${assessment.judgeName}</div>
+                        <div class="assessment-scores">
+                            <div class="score-item">
+                                <span class="score-label">System Complexity:</span>
+                                <span class="score-value">\${assessment.ratings.complexity}/5</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-label">Clear Storytelling:</span>
+                                <span class="score-value">\${assessment.ratings.storytelling}/5</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-label">Systems Action Plan:</span>
+                                <span class="score-value">\${assessment.ratings.actionPlan}/5</span>
+                            </div>
+                            <div class="score-item">
+                                <span class="score-label">Overall Assessment:</span>
+                                <span class="score-value">\${assessment.ratings.overall}/5</span>
+                            </div>
+                        </div>
+                        \${this.renderComments(assessment.comments)}
+                        <div style="font-size: 0.875rem; color: #666666; margin-top: 1rem;">
+                            Submitted: \${new Date(assessment.submittedAt).toLocaleString()}
+                        </div>
+                    </div>
+                \`).join('');
+            }
+
+            renderComments(comments) {
+                const commentItems = [
+                    { label: 'Complexity Comments', text: comments.complexity },
+                    { label: 'Storytelling Comments', text: comments.storytelling },
+                    { label: 'Action Plan Comments', text: comments.actionPlan },
+                    { label: 'Overall Comments', text: comments.overall }
+                ].filter(item => item.text && item.text.trim());
+                
+                if (commentItems.length === 0) {
+                    return '<div style="color: #999; font-style: italic; margin-top: 1rem;">No comments provided</div>';
+                }
+                
+                return \`
+                    <div class="comments-section">
+                        \${commentItems.map(item => \`
+                            <div class="comment-item">
+                                <div class="comment-label">\${item.label}:</div>
+                                <div class="comment-text">\${item.text}</div>
+                            </div>
+                        \`).join('')}
+                    </div>
+                \`;
+            }
+
+            getScoreClass(score) {
+                if (score >= 4.5) return 'score-excellent';
+                if (score >= 3.5) return 'score-good';
+                if (score >= 2.5) return 'score-average';
+                return 'score-fair';
+            }
+
+            async exportCSV() {
+                try {
+                    const response = await fetch('/api/export/csv');
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'team-assessments.csv';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        alert('Assessment data exported successfully!');
+                    } else {
+                        throw new Error('Failed to export data');
+                    }
+                } catch (error) {
+                    alert('Error exporting data: ' + error.message);
+                }
+            }
+
+            generateGrades() {
+                alert('Grade generation feature will calculate final grades based on assessment averages. This would typically integrate with your LMS or gradebook system.');
+            }
+        }
+
+        // Global function for toggling details
+        function toggleDetails(index) {
+            const detailsRow = document.getElementById(\`details-\${index}\`);
+            const isVisible = detailsRow.style.display === 'table-row';
+            
+            if (isVisible) {
+                detailsRow.style.display = 'none';
+            } else {
+                // Hide all other details first
+                document.querySelectorAll('.detailed-view').forEach(row => {
+                    row.style.display = 'none';
+                });
+                detailsRow.style.display = 'table-row';
+            }
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            new AssessmentAnalytics();
+        });
+    </script>
+</body>
+</html>

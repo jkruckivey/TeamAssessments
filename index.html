@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Assessment Form - Ivey EdTech Lab</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-icon">IVEY</div>
+                    <div class="header-text">
+                        <h1>Team Assessment Form</h1>
+                        <p class="subtitle">EdTech Lab • Judge Evaluation Portal</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <a href="/admin" class="admin-link">Admin Dashboard</a>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="form-section">
+                <div class="instructions">
+                    <h2>Assessment Instructions</h2>
+                    <p>Please rate each team on the following criteria using a scale from <strong>1 (Fair)</strong> to <strong>5 (Excellent)</strong>. Comments are encouraged to provide detailed feedback.</p>
+                    
+                    <div class="rubric-section">
+                        <h3>Assessment Rubric</h3>
+                        <p class="rubric-note"><em>Note: Students have also been given this criteria for their preparation.</em></p>
+                        
+                        <div class="rubric-grid">
+                            <div class="rubric-criterion">
+                                <h4>1. System Complexity Understanding</h4>
+                                <p>Demonstrates a good understanding of the complexity of the system</p>
+                            </div>
+                            
+                            <div class="rubric-criterion">
+                                <h4>2. Clear Storytelling</h4>
+                                <p>Demonstrates the ability to simplify the complexity with a clear story</p>
+                            </div>
+                            
+                            <div class="rubric-criterion">
+                                <h4>3. Systems-Oriented Action Plan</h4>
+                                <p>Demonstrates the ability to build a systems-oriented action plan</p>
+                            </div>
+                            
+                            <div class="rubric-criterion">
+                                <h4>4. Overall Assessment</h4>
+                                <p>Holistic evaluation of the team's performance across all criteria</p>
+                            </div>
+                        </div>
+                        
+                        <div class="rating-guide">
+                            <h4>Rating Scale Guide:</h4>
+                            <div class="rating-definitions">
+                                <div class="rating-def"><strong>5 - Excellent:</strong> Exceptional performance that exceeds expectations</div>
+                                <div class="rating-def"><strong>4 - Good:</strong> Above average performance that meets most expectations</div>
+                                <div class="rating-def"><strong>3 - Satisfactory:</strong> Adequate performance that meets basic expectations</div>
+                                <div class="rating-def"><strong>2 - Needs Improvement:</strong> Below average performance with noticeable gaps</div>
+                                <div class="rating-def"><strong>1 - Fair:</strong> Poor performance requiring significant improvement</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="assessment-form" class="assessment-form">
+                    <div class="form-group">
+                        <label for="judge-name">Your Name *</label>
+                        <input type="text" id="judge-name" name="judgeName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="team-name">Student Team Name *</label>
+                        <input type="text" id="team-name" name="teamName" required placeholder="Enter the team name exactly as provided">
+                    </div>
+
+                    <div class="criteria-section">
+                        <h3>Assessment Criteria</h3>
+                        <p class="criteria-note">Rate each criterion from 1 (Fair) to 5 (Excellent)</p>
+
+                        <!-- Criterion 1: System Complexity Understanding -->
+                        <div class="criterion-group">
+                            <div class="criterion-header">
+                                <h4>1. Demonstrates a good understanding of the complexity of the system</h4>
+                            </div>
+                            <div class="rating-section">
+                                <div class="rating-scale">
+                                    <div class="rating-inputs">
+                                        <label class="rating-option">
+                                            <input type="radio" name="complexity" value="1" required>
+                                            <span class="rating-label">1 - Fair</span>
+                                        </label>
+                                        <label class="rating-option">
+                                            <input type="radio" name="complexity" value="2">
+                                            <span class="rating-label">2</span>
+                                        </label>
+                                        <label class="rating-option">
+                                            <input type="radio" name="complexity" value="3">
+                                            <span class="rating-label">3</span>
+                                        </label>
+                                        <label class="rating-option">
+                                            <input type="radio" name="complexity" value="4">
+                                            <span class="rating-label">4</span>
+                                        </label>
+                                        <label class="rating-option">
+                                            <input type="radio" name="complexity" value="5">
+                                            <span class="rating-label">5 - Excellent</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="comment-section">
+                                    <label for="complexity-comments">Comments (optional)</label>
+                                    <textarea id="complexity-comments" name="complexityComments" rows="3" placeholder="Provide specific feedback about the team's understanding of system complexity..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Criterion 2: Clear Storytelling -->
+                        <div class="criterion-group">
+                            <div class="criterion-header">
+                                <h4>2. Demonstrates the ability to simplify the complexity with a clear story</h4>
+                            </div>
+                            <div class="rating-section">
+                                <div class="rating-scale">
+                                    <div class="rating-inputs">
+                                        <label class="rating-option">
+                                            <input type="radio" name="storytelling" value="1" required>
+                                            <span class="rating-label">1 - Fair</span>
+                                        </label>
+                                        <label class="rating-option">
+                                            <input type="radio" name="storytelling" value="2">
+                                            <span class="rating-label">2</span>
+                                        </label>
+                                        <label class="rating-option">
+                                            <input type="radio" name="storytelling" value="3">
+                                            <span class="rating-label">3</span>
+                                        </label>
+                                        <label class="rating-option">
+                                            <input type="radio" name="storytelling" value="4">
+                                            <span class="rating-label">4</span>
+                                        </label>
+                                        <label class="rating-option">
+                                            <input type="radio" name="storytelling" value="5">
+                                            <span class="rating-label">5 - Excellent</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="comment-section">
+                                    <label for="storytelling-comments">Comments (optional)</label>
+                                    <textarea id="storytelling-comments" name="storytellingComments" rows="3" placeholder="Provide feedback about the clarity and effectiveness of their story..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Criterion 3: Systems-Oriented Action Plan -->
+                        <div class="criterion-group">
+                            <div class="criterion-header">
+                                <h4>3. Demonstrates the ability to build a systems-oriented action plan</h4>
+                            </div>
+                            <div class="rating-section">
+                                <div class="rating-scale">
+                                    <div class="rating-inputs">
+                                        <label class="rating-option">
+                                            <input type="radio" name="actionPlan" value="1" required>
+                                            <span class="rating-label">1 - Fair</span>
+                                        </label>
+                                        <label class="rating-option">
+                                            <input type="radio" name="actionPlan" value="2">
+                                            <span class="rating-label">2</span>
+                                        </label>
+                                        <label class="rating-option">
+                                            <input type="radio" name="actionPlan" value="3">
+                                            <span class="rating-label">3</span>
+                                        </label>
+                                        <label class="rating-option">
+                                            <input type="radio" name="actionPlan" value="4">
+                                            <span class="rating-label">4</span>
+                                        </label>
+                                        <label class="rating-option">
+                                            <input type="radio" name="actionPlan" value="5">
+                                            <span class="rating-label">5 - Excellent</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="comment-section">
+                                    <label for="actionplan-comments">Comments (optional)</label>
+                                    <textarea id="actionplan-comments" name="actionPlanComments" rows="3" placeholder="Provide feedback about their systems thinking and action planning..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Criterion 4: Overall Assessment -->
+                        <div class="criterion-group">
+                            <div class="criterion-header">
+                                <h4>4. Overall Assessment</h4>
+                            </div>
+                            <div class="rating-section">
+                                <div class="rating-scale">
+                                    <div class="rating-inputs">
+                                        <label class="rating-option">
+                                            <input type="radio" name="overall" value="1" required>
+                                            <span class="rating-label">1 - Fair</span>
+                                        </label>
+                                        <label class="rating-option">
+                                            <input type="radio" name="overall" value="2">
+                                            <span class="rating-label">2</span>
+                                        </label>
+                                        <label class="rating-option">
+                                            <input type="radio" name="overall" value="3">
+                                            <span class="rating-label">3</span>
+                                        </label>
+                                        <label class="rating-option">
+                                            <input type="radio" name="overall" value="4">
+                                            <span class="rating-label">4</span>
+                                        </label>
+                                        <label class="rating-option">
+                                            <input type="radio" name="overall" value="5">
+                                            <span class="rating-label">5 - Excellent</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="comment-section">
+                                    <label for="overall-comments">Overall Comments (optional)</label>
+                                    <textarea id="overall-comments" name="overallComments" rows="4" placeholder="Provide overall feedback and any additional thoughts about this team's performance..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Submit Assessment</button>
+                        <button type="reset" class="btn-secondary">Clear Form</button>
+                    </div>
+                </form>
+
+                <div id="success-message" class="success-message" style="display: none;">
+                    <h3>Assessment Submitted Successfully!</h3>
+                    <p>Thank you for your evaluation. Your assessment has been recorded.</p>
+                    <button class="btn-secondary" onclick="location.reload()">Submit Another Assessment</button>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="footer-content">
+                <p>&copy; 2025 Ivey Business School EdTech Lab</p>
+                <div class="footer-links">
+                    <a href="/admin">Admin</a>
+                    <span>•</span>
+                    <a href="/api/health">Status</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
