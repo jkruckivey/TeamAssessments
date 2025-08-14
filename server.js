@@ -325,6 +325,138 @@ app.get('/api/assessments', (req, res) => {
   res.json(result);
 });
 
+// Add a team (assign group)
+app.post('/api/teams', (req, res) => {
+    const { name, group: bodyGroup } = req.body;
+    const group = normalizeGroup(bodyGroup || req.query.group);
+    const team = { id: uuidv4(), name: name.trim(), group, createdAt: new Date().toISOString() };
+    teams.push(team);
+    saveData();
+    res.json(team);
+});
+
+// Upload teams from CSV (scoped by group)
+app.post('/api/teams/upload', upload.single('csvFile'), async (req, res) => {
+    try {
+        const group = normalizeGroup(req.query.group);
+        if (!req.file) {
+            return res.status(400).json({ error: 'No CSV file uploaded' });
+        }
+        const csvData = await parseCSV(req.file.buffer);
+        if (csvData.length === 0) {
+            return res.status(400).json({
+                error: 'CSV file is empty or invalid',
+                expectedFormat: 'CSV should have columns: team_name, teamName, Team Name, name, or Name'
+            });
+        }
+        const { errors, validTeams } = validateTeamData(csvData);
+        if (errors.length > 0) {
+            return res.status(400).json({
+                error: 'Validation errors found',
+                details: errors,
+                validTeams: validTeams.length,
+                totalRows: csvData.length
+            });
+        }
+        const existingTeamNames = new Set(
+            teams.filter(t => normalizeGroup(t.group) === group).map(t => t.name.toLowerCase())
+        );
+        const duplicates = [];
+        const newTeams = [];
+        validTeams.forEach(team => {
+            if (existingTeamNames.has(team.name.toLowerCase())) {
+                duplicates.push(team.name);
+            } else {
+                team.group = group;
+                newTeams.push(team);
+                existingTeamNames.add(team.name.toLowerCase());
+            }
+        });
+        teams.push(...newTeams);
+        await saveData();
+        const result = {
+            success: true,
+            message: `Successfully imported ${newTeams.length} teams`,
+            imported: newTeams.length,
+            duplicatesSkipped: duplicates.length,
+            totalProcessed: validTeams.length,
+            newTeams: newTeams.map(t => ({ name: t.name, id: t.id }))
+        };
+        if (duplicates.length > 0) {
+            result.duplicates = duplicates;
+            result.message += ` (${duplicates.length} duplicates skipped)`;
+        }
+        console.log(`CSV Import [group=${group}]: ${newTeams.length} teams added, ${duplicates.length} duplicates skipped`);
+        res.json(result);
+    } catch (error) {
+        console.error('Error processing CSV upload:', error);
+        res.status(500).json({
+            error: 'Failed to process CSV file',
+            details: error.message
+        });
+    }
+});
+
+// Get assessments by team (optional group)
+app.get('/api/assessments/team/:teamName', (req, res) => {
+    const teamName = req.params.teamName;
+    const group = req.query.group ? normalizeGroup(req.query.group) : null;
+    const teamAssessments = assessments.filter(a =>
+        a.teamName.toLowerCase() === teamName.toLowerCase() && (!group || normalizeGroup(a.group) === group)
+    );
+    res.json(teamAssessments);
+});
+
+// Analytics (scoped by group if provided)
+app.get('/api/analytics', (req, res) => {
+    try {
+        const group = req.query.group ? normalizeGroup(req.query.group) : null;
+        const source = group ? assessments.filter(a => normalizeGroup(a.group) === group) : assessments;
+        const teamStats = {};
+        source.forEach(assessment => {
+            const name = assessment.teamName;
+            if (!teamStats[name]) {
+                teamStats[name] = {
+                    teamName: name,
+                    assessments: [],
+                    averages: { complexity: 0, storytelling: 0, actionPlan: 0, overall: 0 },
+                    totalScore: 0,
+                    judgeCount: 0
+                };
+            }
+            teamStats[name].assessments.push(assessment);
+            teamStats[name].judgeCount++;
+        });
+        Object.values(teamStats).forEach(team => {
+            const totals = { complexity: 0, storytelling: 0, actionPlan: 0, overall: 0 };
+            team.assessments.forEach(a => {
+                totals.complexity += a.ratings.complexity;
+                totals.storytelling += a.ratings.storytelling;
+                totals.actionPlan += a.ratings.actionPlan;
+                totals.overall += a.ratings.overall;
+            });
+            const count = team.judgeCount || 1;
+            team.averages = {
+                complexity: (totals.complexity / count).toFixed(2),
+                storytelling: (totals.storytelling / count).toFixed(2),
+                actionPlan: (totals.actionPlan / count).toFixed(2),
+                overall: (totals.overall / count).toFixed(2)
+            };
+            team.totalScore = (((totals.complexity + totals.storytelling + totals.actionPlan + totals.overall) / (count * 4)) * 100).toFixed(1);
+        });
+        const analytics = {
+            totalAssessments: source.length,
+            totalTeams: Object.keys(teamStats).length,
+            teamStats: Object.values(teamStats).sort((a, b) => b.totalScore - a.totalScore),
+            judgeList: [...new Set(source.map(a => a.judgeName))]
+        };
+        res.json(analytics);
+    } catch (error) {
+        console.error('Error generating analytics:', error);
+        res.status(500).json({ error: 'Failed to generate analytics' });
+    }
+});
+
 // Export assessments as CSV
 app.get('/api/export/csv', (req, res) => {
     try {
