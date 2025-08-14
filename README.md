@@ -174,7 +174,38 @@ Example: (4+5+3+4) ÷ 20 × 100 = 80%
 ```bash
 PORT=3000                    # Server port (optional)
 NODE_ENV=production         # Environment mode
+
+# Email Notifications
+EMAIL_USER=your-email@gmail.com    # Gmail address for sending notifications
+EMAIL_PASS=your-app-password       # Gmail App Password (not regular password)
 ```
+
+### Setting Up Email Notifications
+
+1. **Gmail Configuration** (Recommended):
+   - Use a Gmail account for sending notifications
+   - Enable 2-factor authentication on your Gmail account
+   - Generate an App Password: [Gmail App Passwords Guide](https://support.google.com/accounts/answer/185833)
+   - Set `EMAIL_USER` to your Gmail address
+   - Set `EMAIL_PASS` to the generated App Password
+
+2. **Copy the example environment file**:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Configure your email settings** in `.env`:
+   ```bash
+   EMAIL_USER=your-email@gmail.com
+   EMAIL_PASS=your-16-character-app-password
+   ```
+
+4. **Email Features**:
+   - Automatic notification sent to `jkrcuk@ivey.ca` for every assessment
+   - Professional HTML email format with Ivey branding
+   - Includes all assessment details and ratings
+   - Direct link to admin dashboard
+   - Assessment ID for reference
 
 ## File Structure
 ```

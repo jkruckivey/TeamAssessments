@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs').promises;
 const { v4: uuidv4 } = require('uuid');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app = express();
@@ -58,6 +59,122 @@ async function saveData() {
         } catch (error) {
             console.error('Error saving data:', error);
         }
+    }
+}
+
+// Email configuration
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER || 'your-email@gmail.com',
+        pass: process.env.EMAIL_PASS || 'your-app-password'
+    }
+});
+
+// Test email configuration on startup
+transporter.verify((error, success) => {
+    if (error) {
+        console.log('Email configuration error:', error.message);
+        console.log('Note: Email notifications will not work. Please configure EMAIL_USER and EMAIL_PASS in .env file');
+    } else {
+        console.log('Email server is ready to send notifications');
+    }
+});
+
+// Send assessment notification email
+async function sendAssessmentNotification(assessment) {
+    try {
+        const totalRating = assessment.ratings.complexity + assessment.ratings.storytelling + 
+                          assessment.ratings.actionPlan + assessment.ratings.overall;
+        const totalScore = ((totalRating / 20) * 100).toFixed(1);
+        
+        const mailOptions = {
+            from: process.env.EMAIL_USER || 'team-assessments@ivey.ca',
+            to: 'jkrcuk@ivey.ca',
+            subject: `New Team Assessment Submitted - ${assessment.teamName}`,
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .header { background: #c5b783; color: #2c2c2c; padding: 20px; text-align: center; }
+                        .content { padding: 20px; }
+                        .assessment-details { background: #fafaf8; padding: 15px; margin: 15px 0; border-left: 4px solid #c5b783; }
+                        .rating-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 15px 0; }
+                        .rating-item { background: white; padding: 10px; border: 1px solid #e5e5e5; }
+                        .score-highlight { font-size: 1.2em; font-weight: bold; color: #c5b783; }
+                        .comments { margin: 15px 0; padding: 10px; background: #f9f9f9; border: 1px solid #e5e5e5; }
+                        .footer { background: #f5f5f5; padding: 15px; text-align: center; font-size: 0.9em; color: #666; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>🎯 New Team Assessment Received</h1>
+                        <p>Ivey EdTech Lab • Team Assessment Platform</p>
+                    </div>
+                    
+                    <div class="content">
+                        <div class="assessment-details">
+                            <h2>Assessment Summary</h2>
+                            <p><strong>Judge:</strong> ${assessment.judgeName}</p>
+                            <p><strong>Team:</strong> ${assessment.teamName}</p>
+                            <p><strong>Overall Score:</strong> <span class="score-highlight">${totalScore}%</span></p>
+                            <p><strong>Submitted:</strong> ${new Date(assessment.submittedAt).toLocaleString()}</p>
+                        </div>
+                        
+                        <h3>Individual Ratings (1-5 Scale)</h3>
+                        <div class="rating-grid">
+                            <div class="rating-item">
+                                <strong>System Complexity Understanding</strong><br>
+                                Rating: ${assessment.ratings.complexity}/5
+                            </div>
+                            <div class="rating-item">
+                                <strong>Clear Storytelling</strong><br>
+                                Rating: ${assessment.ratings.storytelling}/5
+                            </div>
+                            <div class="rating-item">
+                                <strong>Systems-Oriented Action Plan</strong><br>
+                                Rating: ${assessment.ratings.actionPlan}/5
+                            </div>
+                            <div class="rating-item">
+                                <strong>Overall Assessment</strong><br>
+                                Rating: ${assessment.ratings.overall}/5
+                            </div>
+                        </div>
+                        
+                        ${assessment.comments.complexity || assessment.comments.storytelling || assessment.comments.actionPlan || assessment.comments.overall ? `
+                        <h3>Judge Comments</h3>
+                        ${assessment.comments.complexity ? `<div class="comments"><strong>Complexity:</strong> ${assessment.comments.complexity}</div>` : ''}
+                        ${assessment.comments.storytelling ? `<div class="comments"><strong>Storytelling:</strong> ${assessment.comments.storytelling}</div>` : ''}
+                        ${assessment.comments.actionPlan ? `<div class="comments"><strong>Action Plan:</strong> ${assessment.comments.actionPlan}</div>` : ''}
+                        ${assessment.comments.overall ? `<div class="comments"><strong>Overall:</strong> ${assessment.comments.overall}</div>` : ''}
+                        ` : '<p><em>No additional comments provided by the judge.</em></p>'}
+                        
+                        <p style="margin-top: 25px;">
+                            <a href="http://localhost:${PORT}/admin" style="background: #c5b783; color: #2c2c2c; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
+                                📊 View Admin Dashboard
+                            </a>
+                        </p>
+                    </div>
+                    
+                    <div class="footer">
+                        <p>This assessment was automatically submitted through the Ivey Team Assessment Platform.</p>
+                        <p>Assessment ID: ${assessment.id}</p>
+                    </div>
+                </body>
+                </html>
+            `
+        };
+        
+        await transporter.sendMail(mailOptions);
+        console.log(`📧 Assessment notification sent for team: ${assessment.teamName}`);
+        return true;
+        
+    } catch (error) {
+        console.error('Error sending email notification:', error.message);
+        return false;
     }
 }
 
@@ -128,6 +245,11 @@ app.post('/api/assessments', async (req, res) => {
 
         assessments.push(assessment);
         await saveData();
+
+        // Send email notification (don't wait for it to complete)
+        sendAssessmentNotification(assessment).catch(error => {
+            console.error('Failed to send email notification:', error.message);
+        });
 
         res.json({ 
             success: true, 

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "6b558371-00e7-4ebb-aac5-2c0aa4759a1e",
+    "judgeName": "Test Judge",
+    "teamName": "Test Team Alpha",
+    "ratings": {
+      "complexity": 4,
+      "storytelling": 5,
+      "actionPlan": 3,
+      "overall": 4
+    },
+    "comments": {
+      "complexity": "Good understanding of system interconnections",
+      "storytelling": "Excellent narrative flow",
+      "actionPlan": "Solid framework but could be more detailed",
+      "overall": "Strong presentation overall"
+    },
+    "submittedAt": "2025-08-14T17:31:19.978Z"
+  }
+]
