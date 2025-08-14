@@ -11,6 +11,7 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 // Helper to normalize group slug
 function normalizeGroup(value) {
   const v = (value ?? "").toString().trim();
@@ -74,13 +75,12 @@ async function initializeData() {
 // Save data to files
 async function saveData() {
     try {
-            await fs.mkdir(DATA_DIR, { recursive: true });
-            await fs.writeFile(path.join(DATA_DIR, 'assessments.json'), JSON.stringify(assessments, null, 2));
-            await fs.writeFile(path.join(DATA_DIR, 'teams.json'), JSON.stringify(teams, null, 2));
-            await fs.writeFile(path.join(DATA_DIR, 'judges.json'), JSON.stringify(judges, null, 2));
-        } catch (error) {
-            console.error('Error saving data:', error);
-        }
+        await fs.mkdir(DATA_DIR, { recursive: true });
+        await fs.writeFile(path.join(DATA_DIR, 'assessments.json'), JSON.stringify(assessments, null, 2));
+        await fs.writeFile(path.join(DATA_DIR, 'teams.json'), JSON.stringify(teams, null, 2));
+        await fs.writeFile(path.join(DATA_DIR, 'judges.json'), JSON.stringify(judges, null, 2));
+    } catch (error) {
+        console.error('Error saving data:', error);
     }
 }
 

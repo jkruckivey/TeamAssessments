@@ -751,5 +751,88 @@ Team Delta</pre>
         });
       })();
     </script>
-</body>
+    <script>
+      document.addEventListener('DOMContentLoaded', function(){
+        function getGroupFromUrl(){
+          var p = new URLSearchParams(window.location.search);
+          var g = (p.get('group')||'default');
+          return (g||'').trim() || 'default';
+        }
+        function currentGroup(){
+          var el = document.getElementById('group-slug');
+          var v = el && el.value && el.value.trim();
+          return v || getGroupFromUrl() || 'default';
+        }
+        function buildShareSection(){
+          var actions = document.querySelector('.actions-section');
+          if (!actions || document.getElementById('share-form-link')) return;
+          var wrap = document.createElement('div');
+          wrap.className = 'share-links';
+          wrap.style.cssText = 'margin-top:2rem;padding:1.5rem;background:#fafaf8;border:1px solid #e5e5e5;';
+          wrap.innerHTML = `
+            <h3 style="margin-bottom: 1rem; color: #2c2c2c;">Share Links</h3>
+            <div style="display:flex;flex-direction:column;gap:0.75rem;">
+              <div style="display:flex;gap:0.5rem;align-items:center;">
+                <label style="min-width:140px;font-weight:600;">Judge Form:</label>
+                <input id="share-form-link" type="text" readonly style="flex:1;padding:0.5rem;border:2px solid #e5e5e5;">
+                <button id="copy-form-link" class="btn-secondary" style="padding:0.5rem 1rem;">Copy</button>
+              </div>
+              <div style="display:flex;gap:0.5rem;align-items:center;">
+                <label style="min-width:140px;font-weight:600;">Admin Dashboard:</label>
+                <input id="share-admin-link" type="text" readonly style="flex:1;padding:0.5rem;border:2px solid #e5e5e5;">
+                <button id="copy-admin-link" class="btn-secondary" style="padding:0.5rem 1rem;">Copy</button>
+              </div>
+            </div>
+          `;
+          actions.appendChild(wrap);
+        }
+        function setShareLinks(){
+          var g = encodeURIComponent(currentGroup());
+          var origin = window.location.origin;
+          var formUrl = origin + '/?group=' + g;
+          var adminUrl = origin + '/admin?group=' + g;
+          var formInput = document.getElementById('share-form-link');
+          var adminInput = document.getElementById('share-admin-link');
+          if (formInput) formInput.value = formUrl;
+          if (adminInput) adminInput.value = adminUrl;
+        }
+        function ensureToast(){
+          if (document.getElementById('toast')) return;
+          var t = document.createElement('div');
+          t.id = 'toast';
+          t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#333;color:#fff;padding:10px 14px;border-radius:4px;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;transform:translateY(8px);z-index:9999;font-size:14px;';
+          document.body.appendChild(t);
+        }
+        function showToast(msg){
+          ensureToast();
+          var t = document.getElementById('toast');
+          t.textContent = msg;
+          t.style.opacity = '1';
+          t.style.transform = 'translateY(0)';
+          clearTimeout(window.__toastTimer);
+          window.__toastTimer = setTimeout(function(){
+            t.style.opacity = '0';
+            t.style.transform = 'translateY(8px)';
+          }, 1600);
+        }
+        function wireCopy(){
+          function copy(id){
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.select(); el.setSelectionRange(0, 99999);
+            try { document.execCommand('copy'); } catch(e) { if (navigator.clipboard) navigator.clipboard.writeText(el.value); }
+          }
+          var cf = document.getElementById('copy-form-link');
+          var ca = document.getElementById('copy-admin-link');
+          if (cf) cf.addEventListener('click', function(){ copy('share-form-link'); showToast('Form link copied'); });
+          if (ca) ca.addEventListener('click', function(){ copy('share-admin-link'); showToast('Admin link copied'); });
+        }
+        buildShareSection();
+        setShareLinks();
+        wireCopy();
+        var gi = document.getElementById('group-slug');
+        if (gi) gi.addEventListener('input', setShareLinks);
+      });
+    </script>
+  </body>
 </html>
