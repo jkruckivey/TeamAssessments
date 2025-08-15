@@ -325,13 +325,24 @@ class TeamAutocomplete {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    const g = getGroupFromUrl();
+    
+    // Update admin link with group parameter
     const adminLink = document.querySelector('.admin-link');
     if (adminLink) {
-        const g = getGroupFromUrl();
         const url = new URL(adminLink.getAttribute('href'), window.location.origin);
         url.searchParams.set('group', g);
         adminLink.setAttribute('href', url.pathname + url.search);
     }
+    
+    // Update results link with group parameter
+    const resultsLink = document.querySelector('.results-link');
+    if (resultsLink) {
+        const url = new URL(resultsLink.getAttribute('href'), window.location.origin);
+        url.searchParams.set('group', g);
+        resultsLink.setAttribute('href', url.pathname + url.search);
+    }
+    
     new TeamAssessmentForm();
     new TeamAutocomplete();
 

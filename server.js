@@ -18,6 +18,27 @@ function normalizeGroup(value) {
   return v.length ? v : "default";
 }
 
+// Generate unique 6-digit PIN for teams
+function generateTeamPIN() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Ensure PIN is unique within the group
+function generateUniqueTeamPIN(group) {
+    let pin;
+    let attempts = 0;
+    do {
+        pin = generateTeamPIN();
+        attempts++;
+        // Prevent infinite loop
+        if (attempts > 100) {
+            pin = Date.now().toString().slice(-6);
+            break;
+        }
+    } while (teams.some(t => normalizeGroup(t.group) === group && t.pin === pin));
+    return pin;
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -42,6 +63,7 @@ const upload = multer({
 let assessments = [];
 let teams = [];
 let judges = [];
+let groups = ['default']; // Explicitly track groups
 
 // Initialize data
 async function initializeData() {
@@ -67,6 +89,14 @@ async function initializeData() {
         } catch (error) {
             console.log('No existing judge data found, starting fresh');
         }
+
+        try {
+            const groupData = await fs.readFile(path.join(DATA_DIR, 'groups.json'), 'utf8');
+            groups = JSON.parse(groupData);
+        } catch (error) {
+            console.log('No existing group data found, using defaults');
+            groups = ['default'];
+        }
     } catch (error) {
         console.error('Error initializing data:', error);
     }
@@ -79,6 +109,7 @@ async function saveData() {
         await fs.writeFile(path.join(DATA_DIR, 'assessments.json'), JSON.stringify(assessments, null, 2));
         await fs.writeFile(path.join(DATA_DIR, 'teams.json'), JSON.stringify(teams, null, 2));
         await fs.writeFile(path.join(DATA_DIR, 'judges.json'), JSON.stringify(judges, null, 2));
+        await fs.writeFile(path.join(DATA_DIR, 'groups.json'), JSON.stringify(groups, null, 2));
     } catch (error) {
         console.error('Error saving data:', error);
     }
@@ -200,6 +231,126 @@ async function sendAssessmentNotification(assessment) {
     }
 }
 
+// Send PIN notification email to team members
+async function sendPINNotification(team, group) {
+    try {
+        if (!team.members || team.members.length === 0) {
+            console.log(`No email addresses found for team: ${team.name}`);
+            return false;
+        }
+        
+        const memberEmails = team.members
+            .filter(member => member.email && member.email.trim())
+            .map(member => member.email.trim());
+            
+        if (memberEmails.length === 0) {
+            console.log(`No valid email addresses found for team: ${team.name}`);
+            return false;
+        }
+        
+        const mailOptions = {
+            from: process.env.EMAIL_USER || 'team-assessments@ivey.ca',
+            to: memberEmails.join(', '),
+            subject: `Your Team Assessment PIN - ${team.name}`,
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .header { background: #c5b783; color: #2c2c2c; padding: 20px; text-align: center; }
+                        .content { padding: 20px; }
+                        .pin-highlight { 
+                            background: #fafaf8; 
+                            border: 2px solid #c5b783; 
+                            padding: 20px; 
+                            text-align: center; 
+                            margin: 20px 0;
+                            border-radius: 8px;
+                        }
+                        .pin-number { 
+                            font-size: 2.5rem; 
+                            font-weight: bold; 
+                            color: #c5b783; 
+                            letter-spacing: 0.2em; 
+                            margin: 10px 0;
+                        }
+                        .instructions { 
+                            background: #f9f9f9; 
+                            padding: 15px; 
+                            border-left: 4px solid #c5b783; 
+                            margin: 20px 0;
+                        }
+                        .footer { background: #f5f5f5; padding: 15px; text-align: center; font-size: 0.9em; color: #666; }
+                        .button {
+                            display: inline-block;
+                            background: #c5b783;
+                            color: #2c2c2c;
+                            padding: 12px 24px;
+                            text-decoration: none;
+                            border-radius: 4px;
+                            font-weight: 600;
+                            margin: 10px 0;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>🔐 Your Team Assessment PIN</h1>
+                        <p>Ivey EdTech Lab • Team Assessment Platform</p>
+                    </div>
+                    
+                    <div class="content">
+                        <h2>Hello ${team.name} Members!</h2>
+                        <p>Your team has been registered for the assessment process. Use the PIN below to view your team's assessment results once judges have submitted their evaluations.</p>
+                        
+                        <div class="pin-highlight">
+                            <h3>Your Team PIN</h3>
+                            <div class="pin-number">${team.pin}</div>
+                            <p style="color: #666; font-size: 0.9em;">Keep this PIN safe - you'll need it to access your results</p>
+                        </div>
+                        
+                        <div class="instructions">
+                            <h4>How to View Your Results:</h4>
+                            <ol>
+                                <li>Visit the team results page using the link below</li>
+                                <li>Enter your 6-digit PIN: <strong>${team.pin}</strong></li>
+                                <li>View your team's assessment scores and judge feedback</li>
+                            </ol>
+                        </div>
+                        
+                        <p style="text-align: center;">
+                            <a href="http://localhost:${PORT}/team-results?group=${encodeURIComponent(group)}" class="button">
+                                📊 View Team Results
+                            </a>
+                        </p>
+                        
+                        <p><strong>Team Members:</strong></p>
+                        <ul>
+                            ${team.members.map(member => `<li>${member.name}${member.email ? ` (${member.email})` : ''}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="footer">
+                        <p>This email was sent to all team members. Results will be available once judge assessments are submitted.</p>
+                        <p>Assessment Group: ${group} • Team ID: ${team.id}</p>
+                    </div>
+                </body>
+                </html>
+            `
+        };
+        
+        await transporter.sendMail(mailOptions);
+        console.log(`📧 PIN notification sent to team: ${team.name} (${memberEmails.length} recipients)`);
+        return true;
+        
+    } catch (error) {
+        console.error(`Error sending PIN notification to team ${team.name}:`, error.message);
+        return false;
+    }
+}
+
 // CSV Processing Functions
 async function parseCSV(buffer) {
     return new Promise((resolve, reject) => {
@@ -278,6 +429,75 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
+// Serve team results page
+app.get('/team-results', (req, res) => {
+    res.sendFile(path.join(__dirname, 'team-results.html'));
+});
+
+// Get all available groups
+app.get('/api/groups', (req, res) => {
+    try {
+        const allGroups = new Set(groups);
+        
+        // Also include any groups that exist in teams or assessments but not in groups array
+        teams.forEach(team => {
+            allGroups.add(normalizeGroup(team.group));
+        });
+        
+        assessments.forEach(assessment => {
+            allGroups.add(normalizeGroup(assessment.group));
+        });
+        
+        const groupList = Array.from(allGroups).sort();
+        res.json(groupList);
+    } catch (error) {
+        console.error('Error getting groups:', error);
+        res.status(500).json({ error: 'Failed to get groups' });
+    }
+});
+
+// Create a new group
+app.post('/api/groups', (req, res) => {
+    try {
+        const { name } = req.body;
+        
+        if (!name || !name.trim()) {
+            return res.status(400).json({ error: 'Group name is required' });
+        }
+        
+        const groupName = name.trim();
+        
+        // Validate group name (alphanumeric, hyphens, underscores only)
+        if (!/^[a-zA-Z0-9_-]+$/.test(groupName)) {
+            return res.status(400).json({ 
+                error: 'Group name can only contain letters, numbers, hyphens, and underscores' 
+            });
+        }
+        
+        // Check if group already exists
+        if (groups.includes(groupName)) {
+            return res.status(400).json({ error: 'Group already exists' });
+        }
+        
+        // Add group to the list
+        groups.push(groupName);
+        
+        // Save the updated groups list
+        saveData();
+        
+        console.log(`Created new group: ${groupName}`);
+        res.json({ 
+            success: true, 
+            groupName: groupName,
+            message: `Group '${groupName}' created successfully` 
+        });
+        
+    } catch (error) {
+        console.error('Error creating group:', error);
+        res.status(500).json({ error: 'Failed to create group' });
+    }
+});
+
 // Get all teams
 app.get('/api/teams', (req, res) => {
   const group = normalizeGroup(req.query.group);
@@ -345,7 +565,14 @@ app.get('/api/assessments', (req, res) => {
 app.post('/api/teams', (req, res) => {
     const { name, group: bodyGroup } = req.body;
     const group = normalizeGroup(bodyGroup || req.query.group);
-    const team = { id: uuidv4(), name: name.trim(), group, createdAt: new Date().toISOString() };
+    const team = { 
+        id: uuidv4(), 
+        name: name.trim(), 
+        group, 
+        pin: generateUniqueTeamPIN(group),
+        members: [],
+        createdAt: new Date().toISOString() 
+    };
     teams.push(team);
     saveData();
     res.json(team);
@@ -384,12 +611,26 @@ app.post('/api/teams/upload', upload.single('csvFile'), async (req, res) => {
                 duplicates.push(team.name);
             } else {
                 team.group = group;
+                team.pin = generateUniqueTeamPIN(group);
                 newTeams.push(team);
                 existingTeamNames.add(team.name.toLowerCase());
             }
         });
         teams.push(...newTeams);
         await saveData();
+        
+        // Send PIN emails to team members (don't wait for completion)
+        let emailCount = 0;
+        newTeams.forEach(team => {
+            if (team.members && team.members.length > 0) {
+                sendPINNotification(team, group).then(success => {
+                    if (success) emailCount++;
+                }).catch(error => {
+                    console.error(`Failed to send PIN email for team ${team.name}:`, error.message);
+                });
+            }
+        });
+        
         const result = {
             success: true,
             message: `Successfully imported ${newTeams.length} teams`,
@@ -470,6 +711,30 @@ app.get('/api/analytics', (req, res) => {
     } catch (error) {
         console.error('Error generating analytics:', error);
         res.status(500).json({ error: 'Failed to generate analytics' });
+    }
+});
+
+// Download CSV template for team upload
+app.get('/api/template/teams-csv', (req, res) => {
+    try {
+        const csvHeader = 'team_name,member1_name,member1_email,member2_name,member2_email,member3_name,member3_email,member4_name,member4_email\n';
+        
+        // Add sample data rows to show format
+        const sampleRows = [
+            'Team Alpha,John Smith,john.smith@student.ivey.ca,Sarah Johnson,sarah.johnson@student.ivey.ca,Mike Chen,mike.chen@student.ivey.ca,Lisa Brown,lisa.brown@student.ivey.ca',
+            'Team Beta,Alex Wilson,alex.wilson@student.ivey.ca,Emma Davis,emma.davis@student.ivey.ca,Ryan Taylor,ryan.taylor@student.ivey.ca,',
+            'Team Gamma,Jordan Lee,jordan.lee@student.ivey.ca,Casey Miller,casey.miller@student.ivey.ca,,,'
+        ];
+        
+        const csvContent = csvHeader + sampleRows.join('\n');
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename="teams-upload-template.csv"');
+        res.send(csvContent);
+        
+    } catch (error) {
+        console.error('Error generating CSV template:', error);
+        res.status(500).json({ error: 'Failed to generate CSV template' });
     }
 });
 
@@ -580,13 +845,128 @@ app.post('/api/email/results', async (req, res) => {
     }
 });
 
+// Team results by PIN
+app.get('/api/team-results', (req, res) => {
+    try {
+        const { pin, group: queryGroup } = req.query;
+        const group = normalizeGroup(queryGroup);
+        
+        if (!pin || pin.length !== 6) {
+            return res.status(400).json({ error: 'Please provide a valid 6-digit PIN' });
+        }
+        
+        // Find team by PIN
+        const team = teams.find(t => 
+            normalizeGroup(t.group) === group && t.pin === pin
+        );
+        
+        if (!team) {
+            return res.status(404).json({ error: 'Invalid PIN or no team found' });
+        }
+        
+        // Get all assessments for this team
+        const teamAssessments = assessments.filter(a => 
+            normalizeGroup(a.group) === group && 
+            a.teamName.toLowerCase() === team.name.toLowerCase()
+        );
+        
+        if (teamAssessments.length === 0) {
+            return res.status(404).json({ 
+                error: 'No assessments found for this team yet. Please check back later.' 
+            });
+        }
+        
+        // Calculate averages and total score
+        const totals = { complexity: 0, storytelling: 0, actionPlan: 0, overall: 0 };
+        teamAssessments.forEach(assessment => {
+            totals.complexity += assessment.ratings.complexity;
+            totals.storytelling += assessment.ratings.storytelling;
+            totals.actionPlan += assessment.ratings.actionPlan;
+            totals.overall += assessment.ratings.overall;
+        });
+        
+        const count = teamAssessments.length;
+        const averages = {
+            complexity: (totals.complexity / count).toFixed(2),
+            storytelling: (totals.storytelling / count).toFixed(2),
+            actionPlan: (totals.actionPlan / count).toFixed(2),
+            overall: (totals.overall / count).toFixed(2)
+        };
+        
+        const totalScore = (((totals.complexity + totals.storytelling + totals.actionPlan + totals.overall) / (count * 20)) * 100).toFixed(1);
+        
+        // Return team results
+        res.json({
+            teamName: team.name,
+            judgeCount: count,
+            averages: averages,
+            totalScore: totalScore,
+            assessments: teamAssessments.map(a => ({
+                ratings: a.ratings,
+                comments: a.comments,
+                submittedAt: a.submittedAt
+            })),
+            members: team.members || []
+        });
+        
+    } catch (error) {
+        console.error('Error retrieving team results:', error);
+        res.status(500).json({ error: 'Failed to retrieve team results' });
+    }
+});
+
+// Test email configuration
+app.post('/api/test-email', async (req, res) => {
+    try {
+        const { email } = req.body;
+        const testEmail = email || process.env.EMAIL_USER || 'test@example.com';
+        
+        const mailOptions = {
+            from: process.env.EMAIL_USER || 'team-assessments@ivey.ca',
+            to: testEmail,
+            subject: '✅ Email Configuration Test - Ivey Team Assessment Platform',
+            html: `
+                <h2>Email Test Successful!</h2>
+                <p>If you're reading this, your email configuration is working correctly.</p>
+                <p><strong>Configuration Details:</strong></p>
+                <ul>
+                    <li>From: ${process.env.EMAIL_USER || 'Not configured'}</li>
+                    <li>To: ${testEmail}</li>
+                    <li>Time: ${new Date().toLocaleString()}</li>
+                </ul>
+                <p>You can now proceed with using the assessment platform.</p>
+                <hr>
+                <p><em>Ivey EdTech Lab • Team Assessment Platform</em></p>
+            `
+        };
+        
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ Test email sent successfully to: ${testEmail}`);
+        
+        res.json({ 
+            success: true, 
+            message: 'Test email sent successfully',
+            recipient: testEmail
+        });
+        
+    } catch (error) {
+        console.error('❌ Test email failed:', error.message);
+        res.status(500).json({ 
+            error: 'Failed to send test email',
+            details: error.message,
+            suggestion: 'Check your EMAIL_USER and EMAIL_PASS in .env file'
+        });
+    }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
         assessments: assessments.length,
-        teams: teams.length
+        teams: teams.length,
+        emailConfigured: !!(process.env.EMAIL_USER && process.env.EMAIL_PASS)
     });
 });
 

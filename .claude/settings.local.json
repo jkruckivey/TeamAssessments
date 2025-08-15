@@ -1,5 +1,15 @@
 {
   "permissions": {
+    "allow": [
+      "Bash(npm start)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(powershell:*)",
+      "Bash(set PORT=3002)",
+      "Bash(node server.js)",
+      "Bash(del test-upload.csv)",
+      "Bash(rm:*)"
+    ],
     "defaultMode": "acceptEdits"
   }
 }

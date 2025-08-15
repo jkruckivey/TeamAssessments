@@ -16,5 +16,24 @@
       "overall": "Strong presentation overall"
     },
     "submittedAt": "2025-08-14T17:31:19.978Z"
+  },
+  {
+    "id": "91127733-03e9-43b2-98d7-8380a996b666",
+    "judgeName": "James",
+    "teamName": "Team Delta",
+    "group": "default",
+    "ratings": {
+      "complexity": 2,
+      "storytelling": 3,
+      "actionPlan": 2,
+      "overall": 4
+    },
+    "comments": {
+      "complexity": "",
+      "storytelling": "",
+      "actionPlan": "",
+      "overall": ""
+    },
+    "submittedAt": "2025-08-15T12:03:09.773Z"
   }
 ]

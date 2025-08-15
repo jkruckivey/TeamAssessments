@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Results - Ivey EdTech Lab</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .results-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .pin-entry-section {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: #fafaf8;
+            border-bottom: 2px solid #c5b783;
+        }
+
+        .pin-input {
+            font-size: 1.5rem;
+            padding: 0.75rem;
+            border: 2px solid #e5e5e5;
+            text-align: center;
+            letter-spacing: 0.2em;
+            width: 200px;
+            margin: 1rem;
+            border-radius: 4px;
+        }
+
+        .pin-input:focus {
+            border-color: #c5b783;
+            outline: none;
+        }
+
+        .results-section {
+            display: none;
+            padding: 2rem;
+        }
+
+        .team-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #fafaf8;
+            border-left: 4px solid #c5b783;
+        }
+
+        .score-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .score-card {
+            background: white;
+            padding: 1.5rem;
+            border: 2px solid #e5e5e5;
+            text-align: center;
+        }
+
+        .score-card.overall {
+            border-color: #c5b783;
+            background: #fafaf8;
+        }
+
+        .score-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #c5b783;
+            margin-bottom: 0.5rem;
+        }
+
+        .score-label {
+            color: #666666;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .judge-feedback {
+            margin-top: 2rem;
+        }
+
+        .judge-card {
+            background: #fafaf8;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #c5b783;
+        }
+
+        .judge-name {
+            font-weight: 600;
+            color: #c5b783;
+            margin-bottom: 1rem;
+        }
+
+        .criteria-scores {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .criteria-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            background: white;
+            border: 1px solid #e5e5e5;
+        }
+
+        .criteria-label {
+            font-size: 0.85rem;
+            color: #666666;
+        }
+
+        .criteria-score {
+            font-weight: 600;
+            color: #2c2c2c;
+        }
+
+        .comments-section {
+            margin-top: 1rem;
+        }
+
+        .comment-item {
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .comment-label {
+            font-weight: 600;
+            color: #666666;
+            margin-bottom: 0.25rem;
+        }
+
+        .comment-text {
+            color: #2c2c2c;
+            font-style: italic;
+            margin-left: 1rem;
+        }
+
+        .error-message {
+            background: #ffebee;
+            border: 2px solid #f44336;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: #d32f2f;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666666;
+        }
+
+        @media (max-width: 768px) {
+            .results-container {
+                margin: 0;
+            }
+            
+            .score-overview {
+                grid-template-columns: 1fr;
+            }
+            
+            .criteria-scores {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="results-container">
+        <header style="background: #fff; border-bottom: 2px solid #c5b783; padding: 2rem 3rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="font-size: 0.7rem; background: #c5b783; color: #2c2c2c; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-weight: 900; letter-spacing: 0.1em;">IVEY</div>
+                    <div>
+                        <h1 style="font-size: 1.75rem; color: #2c2c2c; margin: 0; font-weight: 700;">Team Assessment Results</h1>
+                        <p style="font-size: 0.95rem; color: #666666; margin: 0;">Student Portal • View Your Team's Performance</p>
+                    </div>
+                </div>
+                <div>
+                    <a href="/" style="background: #c5b783; color: #2c2c2c; padding: 0.75rem 1.5rem; text-decoration: none; font-size: 0.875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">← Assessment Form</a>
+                </div>
+            </div>
+        </header>
+
+        <!-- PIN Entry Section -->
+        <div id="pin-entry" class="pin-entry-section">
+            <h2 style="margin-bottom: 1rem; color: #2c2c2c;">Enter Your Team PIN</h2>
+            <p style="color: #666666; margin-bottom: 2rem;">Your team PIN was emailed to all team members. Enter it below to view your assessment results.</p>
+            
+            <form id="pin-form">
+                <input 
+                    type="text" 
+                    id="pin-input" 
+                    class="pin-input" 
+                    placeholder="######" 
+                    maxlength="6" 
+                    pattern="[0-9]{6}"
+                    required
+                >
+                <br>
+                <button type="submit" class="btn-primary" style="margin-top: 1rem; padding: 0.75rem 2rem;">View Results</button>
+            </form>
+            
+            <div id="pin-error" class="error-message" style="display: none;"></div>
+            <div id="loading" class="loading" style="display: none;">Loading your results...</div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-section" class="results-section">
+            <div id="team-header" class="team-header">
+                <h2 id="team-name" style="color: #2c2c2c; margin-bottom: 0.5rem;"></h2>
+                <p id="assessment-count" style="color: #666666; margin: 0;"></p>
+            </div>
+
+            <div class="score-overview">
+                <div class="score-card overall">
+                    <div id="overall-score" class="score-number">--</div>
+                    <div class="score-label">Overall Score</div>
+                </div>
+                <div class="score-card">
+                    <div id="complexity-avg" class="score-number">--</div>
+                    <div class="score-label">System Complexity</div>
+                </div>
+                <div class="score-card">
+                    <div id="storytelling-avg" class="score-number">--</div>
+                    <div class="score-label">Clear Storytelling</div>
+                </div>
+                <div class="score-card">
+                    <div id="actionplan-avg" class="score-number">--</div>
+                    <div class="score-label">Action Planning</div>
+                </div>
+            </div>
+
+            <div class="judge-feedback">
+                <h3 style="margin-bottom: 1.5rem; color: #2c2c2c;">Individual Judge Feedback</h3>
+                <div id="judge-cards"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TeamResultsViewer {
+            constructor() {
+                this.initializeEventListeners();
+            }
+
+            initializeEventListeners() {
+                const pinForm = document.getElementById('pin-form');
+                const pinInput = document.getElementById('pin-input');
+                
+                pinForm.addEventListener('submit', (e) => this.handlePinSubmit(e));
+                
+                // Auto-format PIN input
+                pinInput.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/\D/g, '');
+                });
+            }
+
+            async handlePinSubmit(event) {
+                event.preventDefault();
+                
+                const pin = document.getElementById('pin-input').value.trim();
+                const errorDiv = document.getElementById('pin-error');
+                const loading = document.getElementById('loading');
+                
+                if (pin.length !== 6) {
+                    this.showError('Please enter a 6-digit PIN');
+                    return;
+                }
+
+                try {
+                    errorDiv.style.display = 'none';
+                    loading.style.display = 'block';
+                    
+                    const group = this.getGroupFromUrl();
+                    const response = await fetch(`/api/team-results?pin=${pin}&group=${encodeURIComponent(group)}`);
+                    
+                    if (response.ok) {
+                        const teamData = await response.json();
+                        this.displayResults(teamData);
+                    } else {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Invalid PIN');
+                    }
+                    
+                } catch (error) {
+                    this.showError(error.message);
+                } finally {
+                    loading.style.display = 'none';
+                }
+            }
+
+            showError(message) {
+                const errorDiv = document.getElementById('pin-error');
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+
+            displayResults(teamData) {
+                // Hide PIN entry, show results
+                document.getElementById('pin-entry').style.display = 'none';
+                document.getElementById('results-section').style.display = 'block';
+                
+                // Populate team info
+                document.getElementById('team-name').textContent = teamData.teamName;
+                document.getElementById('assessment-count').textContent = 
+                    `Assessed by ${teamData.judgeCount} judge${teamData.judgeCount !== 1 ? 's' : ''}`;
+                
+                // Populate scores
+                document.getElementById('overall-score').textContent = teamData.totalScore + '%';
+                document.getElementById('complexity-avg').textContent = teamData.averages.complexity;
+                document.getElementById('storytelling-avg').textContent = teamData.averages.storytelling;
+                document.getElementById('actionplan-avg').textContent = teamData.averages.actionPlan;
+                
+                // Populate judge feedback
+                this.renderJudgeFeedback(teamData.assessments);
+            }
+
+            renderJudgeFeedback(assessments) {
+                const container = document.getElementById('judge-cards');
+                
+                container.innerHTML = assessments.map((assessment, index) => {
+                    const judgeLabel = `Judge ${String.fromCharCode(65 + index)}`; // Judge A, B, C...
+                    
+                    return `
+                        <div class="judge-card">
+                            <div class="judge-name">${judgeLabel}</div>
+                            
+                            <div class="criteria-scores">
+                                <div class="criteria-item">
+                                    <span class="criteria-label">Complexity:</span>
+                                    <span class="criteria-score">${assessment.ratings.complexity}/5</span>
+                                </div>
+                                <div class="criteria-item">
+                                    <span class="criteria-label">Storytelling:</span>
+                                    <span class="criteria-score">${assessment.ratings.storytelling}/5</span>
+                                </div>
+                                <div class="criteria-item">
+                                    <span class="criteria-label">Action Plan:</span>
+                                    <span class="criteria-score">${assessment.ratings.actionPlan}/5</span>
+                                </div>
+                                <div class="criteria-item">
+                                    <span class="criteria-label">Overall:</span>
+                                    <span class="criteria-score">${assessment.ratings.overall}/5</span>
+                                </div>
+                            </div>
+                            
+                            ${this.renderComments(assessment.comments)}
+                            
+                            <div style="font-size: 0.8rem; color: #999; margin-top: 1rem;">
+                                Submitted: ${new Date(assessment.submittedAt).toLocaleDateString()}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            renderComments(comments) {
+                const commentItems = [
+                    { label: 'Complexity', text: comments.complexity },
+                    { label: 'Storytelling', text: comments.storytelling },
+                    { label: 'Action Plan', text: comments.actionPlan },
+                    { label: 'Overall', text: comments.overall }
+                ].filter(item => item.text && item.text.trim());
+                
+                if (commentItems.length === 0) {
+                    return '<div style="color: #999; font-style: italic;">No additional comments provided</div>';
+                }
+                
+                return `
+                    <div class="comments-section">
+                        ${commentItems.map(item => `
+                            <div class="comment-item">
+                                <div class="comment-label">${item.label} Feedback:</div>
+                                <div class="comment-text">${item.text}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            getGroupFromUrl() {
+                const params = new URLSearchParams(window.location.search);
+                return params.get('group') || 'default';
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new TeamResultsViewer();
+        });
+    </script>
+</body>
+</html>

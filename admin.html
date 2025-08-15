@@ -298,6 +298,16 @@
         <div id="loading" class="loading-admin">Loading assessment data...</div>
         
         <div id="dashboard" style="display: none;">
+            <!-- Group Selector -->
+            <div style="background: #fafaf8; padding: 1.5rem; margin-bottom: 2rem; border-bottom: 2px solid #c5b783;">
+                <div style="display: flex; align-items: center; gap: 1rem; justify-content: center;">
+                    <label for="group-selector" style="font-weight: 600; color: #2c2c2c;">Assessment Group:</label>
+                    <select id="group-selector" style="padding: 0.5rem; border: 2px solid #c5b783; background: white; font-size: 1rem; min-width: 200px;">
+                        <option value="default">Default</option>
+                    </select>
+                </div>
+                <p style="text-align: center; margin-top: 0.5rem; font-size: 0.9rem; color: #666;">Group data updates automatically when you select a different group</p>
+            </div>
             <div class="dashboard-grid">
                 <div class="dashboard-card">
                     <div class="stat-number" id="total-assessments">0</div>
@@ -372,36 +382,106 @@
             </div>
 
             <div class="actions-section">
+                <h3 style="margin-bottom: 1.5rem; color: #2c2c2c;">Group Management</h3>
+                
+                <!-- Group Management Section -->
+                <div style="background: #fafaf8; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid #e5e5e5;">
+                    <h4 style="margin-bottom: 1rem; color: #2c2c2c;">Create New Assessment Group</h4>
+                    <p style="font-size: 0.9rem; color: #666666; margin-bottom: 1rem;">
+                        Create groups for different class sessions, terms, or assessment periods. Each group has its own unique access links.
+                    </p>
+                    
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                        <input type="text" id="new-group-name" placeholder="Enter group name (e.g., Fall2024-MBA, Week3-Session)" style="padding: 0.5rem; border: 2px solid #e5e5e5; min-width: 250px; flex: 1;">
+                        <button id="create-group" class="btn-admin">Create Group</button>
+                    </div>
+                    
+                    <div id="create-group-status" style="display: none; padding: 1rem; margin-top: 1rem; border-radius: 4px;"></div>
+                    
+                    <!-- Existing Groups Management -->
+                    <div style="margin-top: 2rem;">
+                        <h5 style="margin-bottom: 1rem; color: #2c2c2c;">Existing Groups</h5>
+                        <div id="groups-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+                            <!-- Groups will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                
                 <h3 style="margin-bottom: 1.5rem; color: #2c2c2c;">Team Management</h3>
                 
                 <!-- CSV Upload Section -->
                 <div style="background: #fafaf8; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid #e5e5e5;">
                     <h4 style="margin-bottom: 1rem; color: #2c2c2c;">Upload Teams from CSV</h4>
                     <p style="font-size: 0.9rem; color: #666666; margin-bottom: 1rem;">
-                        Upload a CSV file containing team names and optionally team member information. Required column: 
-                        <code>team_name</code>, <code>teamName</code>, <code>Team Name</code>, <code>name</code>, or <code>Name</code>
-                        <br>Optional member columns: <code>member1_name</code>, <code>member1_email</code>, <code>member2_name</code>, <code>member2_email</code>, etc.
+                        Upload a CSV file containing team names and member information. Download the template below to get started with the correct format.
                     </p>
+                    
+                    <!-- Template Download Section -->
+                    <div style="background: #e8f5e8; border: 2px solid #4caf50; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <p style="margin: 0; color: #2e7d32; font-weight: 600;">📥 Download CSV Template</p>
+                            <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: #2e7d32;">
+                                Get a properly formatted CSV file with sample data to guide your team setup.
+                            </p>
+                        </div>
+                        <button id="download-template" class="btn-admin" style="background: #4caf50; white-space: nowrap;">
+                            📥 Download Template
+                        </button>
+                    </div>
+                    
+                    <!-- Group Selection for Upload -->
+                    <div style="background: #e3f2fd; border: 2px solid #2196f3; padding: 1rem; margin-bottom: 1rem; border-radius: 4px;">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+                            <label for="upload-group-select" style="color: #1565c0; font-weight: 600;">📋 Assign teams to group:</label>
+                            <select id="upload-group-select" style="padding: 0.5rem; border: 2px solid #c5b783; background: white; font-size: 1rem; min-width: 150px;">
+                                <option value="default">Default</option>
+                            </select>
+                        </div>
+                        <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: #1976d2;">
+                            Teams will receive email notifications with group-specific access links if email addresses are provided.
+                        </p>
+                    </div>
                     
                     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
                         <input type="file" id="csv-file" accept=".csv" style="padding: 0.5rem; border: 2px solid #e5e5e5;">
-                        <button id="upload-csv" class="btn-admin" disabled>Upload Teams</button>
+                        <button id="upload-csv" class="btn-admin" disabled>Upload Teams to <span id="upload-group-btn">Default</span></button>
                     </div>
                     
                     <div id="upload-status" style="display: none; padding: 1rem; margin-top: 1rem; border-radius: 4px;"></div>
+                </div>
+                
+                <!-- Group-Specific Links Section -->
+                <div style="background: #fafaf8; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid #e5e5e5;">
+                    <h4 style="margin-bottom: 1rem; color: #2c2c2c;">Group-Specific Access Links</h4>
+                    <p style="font-size: 0.9rem; color: #666666; margin-bottom: 1rem;">
+                        Share these group-specific links with judges and team members for streamlined access:
+                    </p>
                     
-                    <details style="margin-top: 1rem;">
-                        <summary style="cursor: pointer; color: #c5b783; font-weight: 600;">CSV Format Example</summary>
-                        <pre style="background: white; padding: 1rem; margin-top: 0.5rem; border: 1px solid #e5e5e5; font-size: 0.875rem;">Basic Format:
-team_name
-Team Alpha
-Team Beta
-
-Enhanced Format with Members:
-team_name,member1_name,member1_email,member2_name,member2_email
-Team Alpha,John Smith,john@student.ivey.ca,Sarah Lee,sarah@student.ivey.ca
-Team Beta,Mike Chen,mike@student.ivey.ca,Lisa Brown,lisa@student.ivey.ca</pre>
-                    </details>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                        <div style="background: white; padding: 1rem; border: 1px solid #e5e5e5; border-radius: 4px;">
+                            <h5 style="margin: 0 0 0.5rem 0; color: #2c2c2c;">👨‍⚖️ Judge Assessment Form</h5>
+                            <div style="background: #f5f5f5; padding: 0.5rem; border-radius: 2px; font-family: monospace; font-size: 0.85rem; word-break: break-all;" id="judge-link">
+                                Loading...
+                            </div>
+                            <button onclick="copyToClipboard('judge-link')" class="btn-admin" style="margin-top: 0.5rem; padding: 0.5rem 1rem; font-size: 0.8rem;">Copy Link</button>
+                        </div>
+                        
+                        <div style="background: white; padding: 1rem; border: 1px solid #e5e5e5; border-radius: 4px;">
+                            <h5 style="margin: 0 0 0.5rem 0; color: #2c2c2c;">👥 Team Results Page</h5>
+                            <div style="background: #f5f5f5; padding: 0.5rem; border-radius: 2px; font-family: monospace; font-size: 0.85rem; word-break: break-all;" id="team-link">
+                                Loading...
+                            </div>
+                            <button onclick="copyToClipboard('team-link')" class="btn-admin" style="margin-top: 0.5rem; padding: 0.5rem 1rem; font-size: 0.8rem;">Copy Link</button>
+                        </div>
+                        
+                        <div style="background: white; padding: 1rem; border: 1px solid #e5e5e5; border-radius: 4px;">
+                            <h5 style="margin: 0 0 0.5rem 0; color: #2c2c2c;">📊 Admin Dashboard</h5>
+                            <div style="background: #f5f5f5; padding: 0.5rem; border-radius: 2px; font-family: monospace; font-size: 0.85rem; word-break: break-all;" id="admin-link">
+                                Loading...
+                            </div>
+                            <button onclick="copyToClipboard('admin-link')" class="btn-admin" style="margin-top: 0.5rem; padding: 0.5rem 1rem; font-size: 0.8rem;">Copy Link</button>
+                        </div>
+                    </div>
                 </div>
                 
                 <h3 style="margin-bottom: 1.5rem; color: #2c2c2c;">Export & Actions</h3>
@@ -416,6 +496,7 @@ Team Beta,Mike Chen,mike@student.ivey.ca,Lisa Brown,lisa@student.ivey.ca</pre>
     <script>
         class AssessmentAnalytics {
             constructor() {
+                this.loadGroups();
                 this.loadData();
                 this.bindEvents();
             }
@@ -424,17 +505,128 @@ Team Beta,Mike Chen,mike@student.ivey.ca,Lisa Brown,lisa@student.ivey.ca</pre>
                 document.getElementById('refresh-data').addEventListener('click', () => this.loadData());
                 document.getElementById('export-csv').addEventListener('click', () => this.exportCSV());
                 document.getElementById('email-results').addEventListener('click', () => this.emailResults());
+                document.getElementById('group-selector').addEventListener('change', () => this.switchGroup());
                 document.getElementById('generate-grades').addEventListener('click', () => this.generateGrades());
+                
+                // Group Management functionality
+                document.getElementById('create-group').addEventListener('click', () => this.createGroup());
+                document.getElementById('new-group-name').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.createGroup();
+                });
                 
                 // CSV Upload functionality
                 const csvFileInput = document.getElementById('csv-file');
                 const uploadButton = document.getElementById('upload-csv');
+                const uploadGroupSelect = document.getElementById('upload-group-select');
                 
                 csvFileInput.addEventListener('change', (e) => {
                     uploadButton.disabled = !e.target.files.length;
                 });
                 
+                uploadGroupSelect.addEventListener('change', (e) => {
+                    this.updateUploadButtonText(e.target.value);
+                });
+                
                 uploadButton.addEventListener('click', () => this.uploadCSV());
+                
+                // Template download functionality
+                document.getElementById('download-template').addEventListener('click', () => this.downloadTemplate());
+            }
+
+            async loadGroups() {
+                try {
+                    const response = await fetch('/api/groups');
+                    const groups = await response.json();
+                    
+                    // Update main group selector
+                    const selector = document.getElementById('group-selector');
+                    selector.innerHTML = '';
+                    
+                    // Update upload group selector
+                    const uploadSelector = document.getElementById('upload-group-select');
+                    uploadSelector.innerHTML = '';
+                    
+                    groups.forEach(group => {
+                        // Main selector
+                        const option = document.createElement('option');
+                        option.value = group;
+                        option.textContent = group.charAt(0).toUpperCase() + group.slice(1);
+                        if (group === this.getCurrentGroup()) {
+                            option.selected = true;
+                        }
+                        selector.appendChild(option);
+                        
+                        // Upload selector
+                        const uploadOption = document.createElement('option');
+                        uploadOption.value = group;
+                        uploadOption.textContent = group.charAt(0).toUpperCase() + group.slice(1);
+                        if (group === this.getCurrentGroup()) {
+                            uploadOption.selected = true;
+                            this.updateUploadButtonText(group);
+                        }
+                        uploadSelector.appendChild(uploadOption);
+                    });
+                    
+                    // Render existing groups management
+                    this.renderGroupsList(groups);
+                    
+                } catch (error) {
+                    console.error('Error loading groups:', error);
+                }
+            }
+
+            switchGroup() {
+                const selector = document.getElementById('group-selector');
+                const selectedGroup = selector.value;
+                
+                // Update URL to reflect the selected group
+                const url = new URL(window.location);
+                url.searchParams.set('group', selectedGroup);
+                window.history.pushState({}, '', url);
+                
+                // Update group displays
+                this.updateGroupDisplays(selectedGroup);
+                
+                // Reload data for the new group
+                this.loadData();
+            }
+
+            updateGroupDisplays(group) {
+                // Update group display in upload section
+                const uploadGroupDisplay = document.getElementById('upload-group-display');
+                const uploadGroupBtn = document.getElementById('upload-group-btn');
+                if (uploadGroupDisplay) {
+                    uploadGroupDisplay.textContent = group.charAt(0).toUpperCase() + group.slice(1);
+                }
+                if (uploadGroupBtn) {
+                    uploadGroupBtn.textContent = group.charAt(0).toUpperCase() + group.slice(1);
+                }
+                
+                // Update group-specific links
+                this.updateGroupLinks(group);
+            }
+
+            updateGroupLinks(group) {
+                const baseUrl = window.location.origin;
+                const groupParam = group !== 'default' ? `?group=${encodeURIComponent(group)}` : '';
+                
+                // Judge assessment form link
+                const judgeLink = document.getElementById('judge-link');
+                if (judgeLink) {
+                    judgeLink.textContent = `${baseUrl}${groupParam}`;
+                }
+                
+                // Team results link
+                const teamLink = document.getElementById('team-link');
+                if (teamLink) {
+                    teamLink.textContent = `${baseUrl}/team-results${groupParam}`;
+                }
+                
+                // Admin dashboard link
+                const adminLink = document.getElementById('admin-link');
+                if (adminLink) {
+                    adminLink.textContent = `${baseUrl}/admin${groupParam}`;
+                }
             }
 
             async loadData() {
@@ -455,6 +647,9 @@ Team Beta,Mike Chen,mike@student.ivey.ca,Lisa Brown,lisa@student.ivey.ca</pre>
 
                     this.displayAnalytics(analytics);
                     this.renderEnhancedAnalytics(analytics, teams, assessments);
+                    
+                    // Update group displays for current group
+                    this.updateGroupDisplays(group);
                     
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('dashboard').style.display = 'block';
@@ -769,14 +964,152 @@ Team Beta,Mike Chen,mike@student.ivey.ca,Lisa Brown,lisa@student.ivey.ca</pre>
                 }
             }
 
+
             generateGrades() {
                 alert('Grade generation feature will calculate final grades based on assessment averages. This would typically integrate with your LMS or gradebook system.');
+            }
+
+            updateUploadButtonText(group) {
+                const uploadGroupBtn = document.getElementById('upload-group-btn');
+                if (uploadGroupBtn) {
+                    uploadGroupBtn.textContent = group.charAt(0).toUpperCase() + group.slice(1);
+                }
+            }
+
+            async downloadTemplate() {
+                try {
+                    const response = await fetch('/api/template/teams-csv');
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'teams-upload-template.csv';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        
+                        // Show brief success feedback
+                        const button = document.getElementById('download-template');
+                        const originalText = button.textContent;
+                        button.textContent = '✅ Downloaded!';
+                        button.style.background = '#2e7d32';
+                        setTimeout(() => {
+                            button.textContent = originalText;
+                            button.style.background = '#4caf50';
+                        }, 2000);
+                    } else {
+                        throw new Error('Failed to download template');
+                    }
+                } catch (error) {
+                    console.error('Template download error:', error);
+                    alert('Error downloading template: ' + error.message);
+                }
+            }
+
+            async createGroup() {
+                const groupNameInput = document.getElementById('new-group-name');
+                const createButton = document.getElementById('create-group');
+                const statusDiv = document.getElementById('create-group-status');
+                
+                const groupName = groupNameInput.value.trim();
+                if (!groupName) {
+                    this.showCreateGroupStatus('Please enter a group name.', 'error');
+                    return;
+                }
+                
+                // Show loading state
+                createButton.disabled = true;
+                createButton.textContent = 'Creating...';
+                this.showCreateGroupStatus('Creating group...', 'info');
+                
+                try {
+                    const response = await fetch('/api/groups', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ name: groupName })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        this.showCreateGroupStatus(`✅ ${result.message}`, 'success');
+                        groupNameInput.value = '';
+                        
+                        // Reload groups to update selectors
+                        await this.loadGroups();
+                        
+                    } else {
+                        this.showCreateGroupStatus(result.error, 'error');
+                    }
+                    
+                } catch (error) {
+                    console.error('Create group error:', error);
+                    this.showCreateGroupStatus('Failed to create group: ' + error.message, 'error');
+                    
+                } finally {
+                    createButton.disabled = false;
+                    createButton.textContent = 'Create Group';
+                }
+            }
+
+            renderGroupsList(groups) {
+                const groupsList = document.getElementById('groups-list');
+                if (!groupsList) return;
+                
+                groupsList.innerHTML = groups.map(group => `
+                    <div style="background: white; padding: 1rem; border: 1px solid #e5e5e5; border-radius: 4px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h6 style="margin: 0; color: #2c2c2c; font-weight: 600;">${group.charAt(0).toUpperCase() + group.slice(1)}</h6>
+                                <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: #666;">
+                                    <a href="?group=${encodeURIComponent(group)}" style="color: #c5b783; text-decoration: none;">View Group</a>
+                                </p>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button onclick="copyGroupLinks('${group}')" class="btn-admin" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Copy Links</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            showCreateGroupStatus(message, type) {
+                const statusDiv = document.getElementById('create-group-status');
+                statusDiv.style.display = 'block';
+                statusDiv.textContent = message;
+                
+                // Style based on type
+                if (type === 'success') {
+                    statusDiv.style.background = '#e8f5e8';
+                    statusDiv.style.border = '2px solid #4caf50';
+                    statusDiv.style.color = '#2e7d32';
+                } else if (type === 'error') {
+                    statusDiv.style.background = '#ffebee';
+                    statusDiv.style.border = '2px solid #f44336';
+                    statusDiv.style.color = '#c62828';
+                } else {
+                    statusDiv.style.background = '#e3f2fd';
+                    statusDiv.style.border = '2px solid #2196f3';
+                    statusDiv.style.color = '#1565c0';
+                }
+                
+                // Auto-hide after 5 seconds for success/info
+                if (type !== 'error') {
+                    setTimeout(() => {
+                        statusDiv.style.display = 'none';
+                    }, 5000);
+                }
             }
 
             async uploadCSV() {
                 const fileInput = document.getElementById('csv-file');
                 const uploadStatus = document.getElementById('upload-status');
                 const uploadButton = document.getElementById('upload-csv');
+                const uploadGroupSelect = document.getElementById('upload-group-select');
                 
                 if (!fileInput.files.length) {
                     this.showUploadStatus('Please select a CSV file first.', 'error');
@@ -784,6 +1117,7 @@ Team Beta,Mike Chen,mike@student.ivey.ca,Lisa Brown,lisa@student.ivey.ca</pre>
                 }
                 
                 const file = fileInput.files[0];
+                const targetGroup = uploadGroupSelect.value;
                 
                 // Show loading state
                 uploadButton.disabled = true;
@@ -794,8 +1128,7 @@ Team Beta,Mike Chen,mike@student.ivey.ca,Lisa Brown,lisa@student.ivey.ca</pre>
                     const formData = new FormData();
                     formData.append('csvFile', file);
                     
-                    const group = this.getCurrentGroup();
-                    const response = await fetch(`/api/teams/upload?group=${encodeURIComponent(group)}`, {
+                    const response = await fetch(`/api/teams/upload?group=${encodeURIComponent(targetGroup)}`, {
                         method: 'POST',
                         body: formData
                     });
@@ -887,150 +1220,59 @@ Team Beta,Mike Chen,mike@student.ivey.ca,Lisa Brown,lisa@student.ivey.ca</pre>
             }
         }
 
+        // Global function for copying links to clipboard
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            const text = element.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                // Show feedback
+                const originalText = element.innerHTML;
+                element.innerHTML = '✅ Copied!';
+                element.style.background = '#e8f5e8';
+                element.style.color = '#2e7d32';
+                
+                setTimeout(() => {
+                    element.innerHTML = originalText;
+                    element.style.background = '#f5f5f5';
+                    element.style.color = '';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy to clipboard. Please copy manually.');
+            });
+        }
+
+        // Global function for copying group-specific links
+        function copyGroupLinks(group) {
+            const baseUrl = window.location.origin;
+            const groupParam = group !== 'default' ? `?group=${encodeURIComponent(group)}` : '';
+            
+            const links = {
+                'Judge Assessment Form': `${baseUrl}${groupParam}`,
+                'Team Results Page': `${baseUrl}/team-results${groupParam}`,
+                'Admin Dashboard': `${baseUrl}/admin${groupParam}`
+            };
+            
+            const linkText = Object.entries(links)
+                .map(([name, url]) => `${name}: ${url}`)
+                .join('\\n');
+            
+            navigator.clipboard.writeText(linkText).then(() => {
+                alert(`✅ Group links copied to clipboard!\\n\\nLinks for group: ${group}`);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy to clipboard. Here are the links:\\n\\n' + linkText);
+            });
+        }
+
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', () => {
             new AssessmentAnalytics();
         });
     </script>
 
-    <!-- Group Management Script -->
-    <script>
-      (function(){
-        function getGroupFromUrl(){
-          const p = new URLSearchParams(window.location.search);
-          return (p.get('group') || 'default').trim();
-        }
-        function currentGroup(){
-          const el = document.getElementById('group-slug');
-          const v = el && el.value && el.value.trim();
-          return v || getGroupFromUrl() || 'default';
-        }
-        function ensureGroupInput(){
-          const fileInput = document.getElementById('csv-file');
-          const fileDiv = fileInput && fileInput.parentElement;
-          if (!fileDiv) return;
-          if (document.getElementById('group-slug')) return;
-          const wrap = document.createElement('div');
-          wrap.style.display='flex';
-          wrap.style.alignItems='center';
-          wrap.style.gap='1rem';
-          wrap.style.marginBottom='1rem';
-          const label = document.createElement('label');
-          label.htmlFor='group-slug';
-          label.style.fontWeight='600';
-          label.textContent='Group:';
-          const input = document.createElement('input');
-          input.type='text';
-          input.id='group-slug';
-          input.placeholder='default';
-          input.style.cssText='padding:0.5rem;border:2px solid #e5e5e5;';
-          input.value = getGroupFromUrl();
-          input.addEventListener('change', function(){
-            const refresh = document.getElementById('refresh-data');
-            if (refresh) refresh.click();
-          });
-          wrap.appendChild(label);
-          wrap.appendChild(input);
-          fileDiv.parentNode.insertBefore(wrap, fileDiv);
-        }
-        
-        document.addEventListener('DOMContentLoaded', function(){
-          ensureGroupInput();
-          document.querySelectorAll('a[href="/"]').forEach(function(a){
-            try {
-              const g = currentGroup();
-              const url = new URL(a.getAttribute('href'), window.location.origin);
-              url.searchParams.set('group', g);
-              a.setAttribute('href', url.pathname + url.search);
-            } catch(e) {}
-          });
-        });
-      })();
-    </script>
 
-    <!-- Share Links Script -->
-    <script>
-      document.addEventListener('DOMContentLoaded', function(){
-        function getGroupFromUrl(){
-          var p = new URLSearchParams(window.location.search);
-          var g = (p.get('group')||'default');
-          return (g||'').trim() || 'default';
-        }
-        function currentGroup(){
-          var el = document.getElementById('group-slug');
-          var v = el && el.value && el.value.trim();
-          return v || getGroupFromUrl() || 'default';
-        }
-        function buildShareSection(){
-          var actions = document.querySelector('.actions-section');
-          if (!actions || document.getElementById('share-form-link')) return;
-          var wrap = document.createElement('div');
-          wrap.className = 'share-links';
-          wrap.style.cssText = 'margin-top:2rem;padding:1.5rem;background:#fafaf8;border:1px solid #e5e5e5;';
-          wrap.innerHTML = `
-            <h3 style="margin-bottom: 1rem; color: #2c2c2c;">Share Links</h3>
-            <div style="display:flex;flex-direction:column;gap:0.75rem;">
-              <div style="display:flex;gap:0.5rem;align-items:center;">
-                <label style="min-width:140px;font-weight:600;">Judge Form:</label>
-                <input id="share-form-link" type="text" readonly style="flex:1;padding:0.5rem;border:2px solid #e5e5e5;">
-                <button id="copy-form-link" class="btn-secondary" style="padding:0.5rem 1rem;">Copy</button>
-              </div>
-              <div style="display:flex;gap:0.5rem;align-items:center;">
-                <label style="min-width:140px;font-weight:600;">Admin Dashboard:</label>
-                <input id="share-admin-link" type="text" readonly style="flex:1;padding:0.5rem;border:2px solid #e5e5e5;">
-                <button id="copy-admin-link" class="btn-secondary" style="padding:0.5rem 1rem;">Copy</button>
-              </div>
-            </div>
-          `;
-          actions.appendChild(wrap);
-        }
-        function setShareLinks(){
-          var g = encodeURIComponent(currentGroup());
-          var origin = window.location.origin;
-          var formUrl = origin + '/?group=' + g;
-          var adminUrl = origin + '/admin?group=' + g;
-          var formInput = document.getElementById('share-form-link');
-          var adminInput = document.getElementById('share-admin-link');
-          if (formInput) formInput.value = formUrl;
-          if (adminInput) adminInput.value = adminUrl;
-        }
-        function ensureToast(){
-          if (document.getElementById('toast')) return;
-          var t = document.createElement('div');
-          t.id = 'toast';
-          t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#333;color:#fff;padding:10px 14px;border-radius:4px;opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;transform:translateY(8px);z-index:9999;font-size:14px;';
-          document.body.appendChild(t);
-        }
-        function showToast(msg){
-          ensureToast();
-          var t = document.getElementById('toast');
-          t.textContent = msg;
-          t.style.opacity = '1';
-          t.style.transform = 'translateY(0)';
-          clearTimeout(window.__toastTimer);
-          window.__toastTimer = setTimeout(function(){
-            t.style.opacity = '0';
-            t.style.transform = 'translateY(8px)';
-          }, 1600);
-        }
-        function wireCopy(){
-          function copy(id){
-            var el = document.getElementById(id);
-            if (!el) return;
-            el.select(); el.setSelectionRange(0, 99999);
-            try { document.execCommand('copy'); } catch(e) { if (navigator.clipboard) navigator.clipboard.writeText(el.value); }
-          }
-          var cf = document.getElementById('copy-form-link');
-          var ca = document.getElementById('copy-admin-link');
-          if (cf) cf.addEventListener('click', function(){ copy('share-form-link'); showToast('Form link copied'); });
-          if (ca) ca.addEventListener('click', function(){ copy('share-admin-link'); showToast('Admin link copied'); });
-        }
-        buildShareSection();
-        setShareLinks();
-        wireCopy();
-        var gi = document.getElementById('group-slug');
-        if (gi) gi.addEventListener('input', setShareLinks);
-      });
-    </script>
 </body>
 </html>
