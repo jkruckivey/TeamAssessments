@@ -442,7 +442,7 @@ app.get('/api/analytics', (req, res) => {
                 actionPlan: (totals.actionPlan / count).toFixed(2),
                 overall: (totals.overall / count).toFixed(2)
             };
-            team.totalScore = (((totals.complexity + totals.storytelling + totals.actionPlan + totals.overall) / (count * 4)) * 100).toFixed(1);
+            team.totalScore = (((totals.complexity + totals.storytelling + totals.actionPlan + totals.overall) / (count * 20)) * 100).toFixed(1);
         });
         const analytics = {
             totalAssessments: source.length,
