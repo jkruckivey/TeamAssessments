@@ -239,9 +239,25 @@ function validateTeamData(data) {
         }
         
         seenTeams.add(cleanName.toLowerCase());
+        
+        // Extract team member information
+        const members = [];
+        for (let i = 1; i <= 6; i++) { // Support up to 6 team members
+            const memberName = row[`member${i}_name`] || row[`Member${i} Name`] || row[`member_${i}_name`];
+            const memberEmail = row[`member${i}_email`] || row[`Member${i} Email`] || row[`member_${i}_email`];
+            
+            if (memberName && memberName.trim()) {
+                members.push({
+                    name: memberName.trim(),
+                    email: memberEmail ? memberEmail.trim() : ''
+                });
+            }
+        }
+        
         validTeams.push({
             id: uuidv4(),
             name: cleanName,
+            members: members,
             createdAt: new Date().toISOString(),
             source: 'csv_upload'
         });
@@ -487,6 +503,80 @@ app.get('/api/export/csv', (req, res) => {
     } catch (error) {
         console.error('Error exporting CSV:', error);
         res.status(500).json({ error: 'Failed to export CSV' });
+    }
+});
+
+// Email results to program team
+app.post('/api/email/results', async (req, res) => {
+    try {
+        const group = req.query.group ? normalizeGroup(req.query.group) : 'default';
+        const source = assessments.filter(a => normalizeGroup(a.group) === group);
+        
+        if (source.length === 0) {
+            return res.status(400).json({ error: 'No assessment data available to email' });
+        }
+        
+        // Generate CSV content
+        const csvHeader = 'Judge Name,Team Name,Complexity Understanding,Clear Storytelling,Systems Action Plan,Overall Assessment,Total Score %,Complexity Comments,Storytelling Comments,Action Plan Comments,Overall Comments,Submitted At\n';
+        const csvRows = source.map(assessment => {
+            const totalScore = (((assessment.ratings.complexity + assessment.ratings.storytelling + assessment.ratings.actionPlan + assessment.ratings.overall) / 20) * 100).toFixed(1);
+            return [
+                assessment.judgeName,
+                assessment.teamName,
+                assessment.ratings.complexity,
+                assessment.ratings.storytelling,
+                assessment.ratings.actionPlan,
+                assessment.ratings.overall,
+                totalScore + '%',
+                `"${assessment.comments.complexity.replace(/"/g, '""')}"`,
+                `"${assessment.comments.storytelling.replace(/"/g, '""')}"`,
+                `"${assessment.comments.actionPlan.replace(/"/g, '""')}"`,
+                `"${assessment.comments.overall.replace(/"/g, '""')}"`,
+                assessment.submittedAt
+            ].join(',');
+        });
+        const csvContent = csvHeader + csvRows.join('\n');
+        
+        // Email recipients - configurable
+        const recipients = process.env.PROGRAM_TEAM_EMAILS ? 
+            process.env.PROGRAM_TEAM_EMAILS.split(',').map(email => email.trim()) : 
+            ['jkrcuk@ivey.ca']; // fallback
+        
+        const mailOptions = {
+            from: process.env.EMAIL_USER || 'team-assessments@ivey.ca',
+            to: recipients.join(', '),
+            subject: `Team Assessment Results Export - ${group} - ${new Date().toLocaleDateString()}`,
+            html: `
+                <h2>📊 Team Assessment Results</h2>
+                <p><strong>Group:</strong> ${group}</p>
+                <p><strong>Total Assessments:</strong> ${source.length}</p>
+                <p><strong>Export Date:</strong> ${new Date().toLocaleString()}</p>
+                <p>Please find the complete assessment results attached as a CSV file.</p>
+                <br>
+                <p><em>Generated automatically by the Ivey Team Assessment Platform</em></p>
+            `,
+            attachments: [
+                {
+                    filename: `team-assessments-${group}-${new Date().toISOString().split('T')[0]}.csv`,
+                    content: csvContent,
+                    contentType: 'text/csv'
+                }
+            ]
+        };
+        
+        await transporter.sendMail(mailOptions);
+        console.log(`📧 Assessment results emailed to: ${recipients.join(', ')}`);
+        
+        res.json({ 
+            success: true, 
+            message: 'Assessment results emailed successfully',
+            recipients: recipients,
+            assessmentCount: source.length
+        });
+        
+    } catch (error) {
+        console.error('Error emailing results:', error);
+        res.status(500).json({ error: 'Failed to email results: ' + error.message });
     }
 });
 

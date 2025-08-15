@@ -378,8 +378,9 @@
                 <div style="background: #fafaf8; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid #e5e5e5;">
                     <h4 style="margin-bottom: 1rem; color: #2c2c2c;">Upload Teams from CSV</h4>
                     <p style="font-size: 0.9rem; color: #666666; margin-bottom: 1rem;">
-                        Upload a CSV file containing team names. The CSV should have a column named: 
+                        Upload a CSV file containing team names and optionally team member information. Required column: 
                         <code>team_name</code>, <code>teamName</code>, <code>Team Name</code>, <code>name</code>, or <code>Name</code>
+                        <br>Optional member columns: <code>member1_name</code>, <code>member1_email</code>, <code>member2_name</code>, <code>member2_email</code>, etc.
                     </p>
                     
                     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
@@ -391,17 +392,22 @@
                     
                     <details style="margin-top: 1rem;">
                         <summary style="cursor: pointer; color: #c5b783; font-weight: 600;">CSV Format Example</summary>
-                        <pre style="background: white; padding: 1rem; margin-top: 0.5rem; border: 1px solid #e5e5e5; font-size: 0.875rem;">team_name
+                        <pre style="background: white; padding: 1rem; margin-top: 0.5rem; border: 1px solid #e5e5e5; font-size: 0.875rem;">Basic Format:
+team_name
 Team Alpha
-Team Beta  
-Team Gamma
-Team Delta</pre>
+Team Beta
+
+Enhanced Format with Members:
+team_name,member1_name,member1_email,member2_name,member2_email
+Team Alpha,John Smith,john@student.ivey.ca,Sarah Lee,sarah@student.ivey.ca
+Team Beta,Mike Chen,mike@student.ivey.ca,Lisa Brown,lisa@student.ivey.ca</pre>
                     </details>
                 </div>
                 
                 <h3 style="margin-bottom: 1.5rem; color: #2c2c2c;">Export & Actions</h3>
                 <button id="refresh-data" class="btn-admin">Refresh Data</button>
                 <button id="export-csv" class="btn-admin">Export CSV</button>
+                <button id="email-results" class="btn-admin">Email Results</button>
                 <button id="generate-grades" class="btn-secondary">Generate Final Grades</button>
             </div>
         </div>
@@ -417,6 +423,7 @@ Team Delta</pre>
             bindEvents() {
                 document.getElementById('refresh-data').addEventListener('click', () => this.loadData());
                 document.getElementById('export-csv').addEventListener('click', () => this.exportCSV());
+                document.getElementById('email-results').addEventListener('click', () => this.emailResults());
                 document.getElementById('generate-grades').addEventListener('click', () => this.generateGrades());
                 
                 // CSV Upload functionality
@@ -737,6 +744,28 @@ Team Delta</pre>
                     }
                 } catch (error) {
                     alert('Error exporting data: ' + error.message);
+                }
+            }
+
+            async emailResults() {
+                try {
+                    const group = this.getCurrentGroup();
+                    const response = await fetch(`/api/email/results?group=${encodeURIComponent(group)}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        alert('✅ Assessment results have been emailed successfully!\n\nSent to: ' + result.recipients.join(', '));
+                    } else {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Failed to send email');
+                    }
+                } catch (error) {
+                    alert('Error sending email: ' + error.message);
                 }
             }
 
