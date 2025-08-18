@@ -35,5 +35,252 @@
       "overall": ""
     },
     "submittedAt": "2025-08-15T12:03:09.773Z"
+  },
+  {
+    "id": "93c9508f-f369-4a31-8b9b-7ecc5e09f5c8",
+    "judgeName": "Melanie",
+    "teamName": "Rye",
+    "group": "default",
+    "ratings": {
+      "complexity": 1,
+      "storytelling": 2,
+      "actionPlan": 2,
+      "overall": 2
+    },
+    "comments": {
+      "complexity": "",
+      "storytelling": "",
+      "actionPlan": "",
+      "overall": ""
+    },
+    "submittedAt": "2025-08-18T16:45:03.461Z"
+  },
+  {
+    "id": "b79224c1-e6a3-4d04-887c-4de656b49781",
+    "judgeName": "Michelina",
+    "teamName": "Rye",
+    "group": "default",
+    "ratings": {
+      "complexity": 2,
+      "storytelling": 3,
+      "actionPlan": 3,
+      "overall": 3
+    },
+    "comments": {
+      "complexity": "",
+      "storytelling": "",
+      "actionPlan": "",
+      "overall": ""
+    },
+    "submittedAt": "2025-08-18T16:49:48.142Z"
+  },
+  {
+    "id": "708b953d-e978-4965-9e14-5fdc4b0366e8",
+    "judgeName": "Michelina",
+    "teamName": "Walnut",
+    "group": "default",
+    "ratings": {
+      "complexity": 2,
+      "storytelling": 3,
+      "actionPlan": 2,
+      "overall": 4
+    },
+    "comments": {
+      "complexity": "",
+      "storytelling": "",
+      "actionPlan": "",
+      "overall": ""
+    },
+    "submittedAt": "2025-08-18T16:50:03.913Z"
+  },
+  {
+    "id": "889b3f29-4968-439a-9120-ca722c0ec88f",
+    "judgeName": "Jin-Su",
+    "teamName": "Rye",
+    "group": "default",
+    "ratings": {
+      "complexity": 4,
+      "storytelling": 4,
+      "actionPlan": 4,
+      "overall": 4
+    },
+    "comments": {
+      "complexity": "",
+      "storytelling": "",
+      "actionPlan": "",
+      "overall": ""
+    },
+    "submittedAt": "2025-08-18T16:52:02.310Z"
+  },
+  {
+    "id": "5e3584a7-2f41-4914-a852-7c3523fd5f14",
+    "judgeName": "Jin-Su",
+    "teamName": "Spruce",
+    "group": "default",
+    "ratings": {
+      "complexity": 4,
+      "storytelling": 4,
+      "actionPlan": 4,
+      "overall": 3
+    },
+    "comments": {
+      "complexity": "",
+      "storytelling": "",
+      "actionPlan": "",
+      "overall": ""
+    },
+    "submittedAt": "2025-08-18T16:54:13.678Z"
+  },
+  {
+    "id": "b2a7cfb1-c76a-454b-a989-68fc9356e2cd",
+    "judgeName": "Jin-Su",
+    "teamName": "Rye",
+    "group": "Classroom-1390",
+    "ratings": {
+      "complexity": 3,
+      "storytelling": 4,
+      "actionPlan": 3,
+      "overall": 3
+    },
+    "comments": {
+      "complexity": "",
+      "storytelling": "",
+      "actionPlan": "",
+      "overall": ""
+    },
+    "submittedAt": "2025-08-18T16:56:03.773Z"
+  },
+  {
+    "id": "dd70abb1-d894-470b-9bb6-588da118407e",
+    "judgeName": "Jin-Su",
+    "teamName": "Rye",
+    "group": "Classroom-1390",
+    "ratings": {
+      "complexity": 4,
+      "storytelling": 3,
+      "actionPlan": 4,
+      "overall": 4
+    },
+    "comments": {
+      "complexity": "",
+      "storytelling": "",
+      "actionPlan": "",
+      "overall": ""
+    },
+    "submittedAt": "2025-08-18T16:57:45.938Z"
+  },
+  {
+    "id": "42cf1ed9-05ab-4786-a37c-579b83c63347",
+    "judgeName": "Michelina",
+    "teamName": "Soybean",
+    "group": "Classroom-1390",
+    "ratings": {
+      "complexity": 4,
+      "storytelling": 4,
+      "actionPlan": 4,
+      "overall": 4
+    },
+    "comments": {
+      "complexity": "",
+      "storytelling": "",
+      "actionPlan": "",
+      "overall": ""
+    },
+    "submittedAt": "2025-08-18T17:17:47.447Z"
+  },
+  {
+    "id": "9a409a10-85c6-4f94-8132-087b7d48a151",
+    "judgeName": "Michelina",
+    "teamName": "Spelt",
+    "group": "Classroom-1390",
+    "ratings": {
+      "complexity": 3,
+      "storytelling": 2,
+      "actionPlan": 3,
+      "overall": 3
+    },
+    "comments": {
+      "complexity": "",
+      "storytelling": "",
+      "actionPlan": "",
+      "overall": ""
+    },
+    "submittedAt": "2025-08-18T17:17:56.838Z"
+  },
+  {
+    "id": "772f4e33-ab74-4338-8c98-fcfb66c1ed72",
+    "judgeName": "Michelina",
+    "teamName": "Spruce",
+    "group": "Classroom-1390",
+    "ratings": {
+      "complexity": 3,
+      "storytelling": 4,
+      "actionPlan": 3,
+      "overall": 4
+    },
+    "comments": {
+      "complexity": "",
+      "storytelling": "",
+      "actionPlan": "",
+      "overall": ""
+    },
+    "submittedAt": "2025-08-18T17:18:07.869Z"
+  },
+  {
+    "id": "53cd1d69-028d-4b3d-8d60-73d74780414a",
+    "judgeName": "Michelina",
+    "teamName": "Wheat",
+    "group": "Classroom-1390",
+    "ratings": {
+      "complexity": 3,
+      "storytelling": 4,
+      "actionPlan": 4,
+      "overall": 4
+    },
+    "comments": {
+      "complexity": "",
+      "storytelling": "",
+      "actionPlan": "",
+      "overall": ""
+    },
+    "submittedAt": "2025-08-18T17:18:18.002Z"
+  },
+  {
+    "id": "cba35555-1291-4e68-ae9d-4d3883fc1d80",
+    "judgeName": "Michelina",
+    "teamName": "Willow",
+    "group": "Classroom-1390",
+    "ratings": {
+      "complexity": 3,
+      "storytelling": 1,
+      "actionPlan": 1,
+      "overall": 2
+    },
+    "comments": {
+      "complexity": "",
+      "storytelling": "",
+      "actionPlan": "",
+      "overall": ""
+    },
+    "submittedAt": "2025-08-18T17:18:37.050Z"
+  },
+  {
+    "id": "8e5be08d-7be8-4e6c-986d-13d5d8a7a878",
+    "judgeName": "Michelina",
+    "teamName": "Rye",
+    "group": "Classroom-1390",
+    "ratings": {
+      "complexity": 3,
+      "storytelling": 3,
+      "actionPlan": 3,
+      "overall": 3
+    },
+    "comments": {
+      "complexity": "",
+      "storytelling": "",
+      "actionPlan": "",
+      "overall": ""
+    },
+    "submittedAt": "2025-08-18T17:19:05.618Z"
   }
 ]

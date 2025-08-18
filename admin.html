@@ -7,11 +7,76 @@
     <link rel="stylesheet" href="/styles.css">
     <style>
         .admin-container {
-            max-width: 1400px;
-            margin: 2rem auto;
+            max-width: 1600px;
+            margin: 1rem auto;
             padding: 0;
             background: white;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .admin-header {
+            background: linear-gradient(135deg, #c5b783, #8a7a4b);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .admin-header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .admin-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .admin-nav {
+            background: #f8f9fa;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 1rem;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .nav-tab {
+            background: none;
+            border: 2px solid transparent;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover {
+            background: #e9ecef;
+        }
+
+        .nav-tab.active {
+            background: white;
+            border-color: #c5b783;
+            color: #8a7a4b;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 2rem;
+        }
+
+        .tab-content.active {
+            display: block;
         }
 
         .dashboard-grid {
@@ -23,25 +88,46 @@
         }
 
         .dashboard-card {
-            background: #fafaf8;
+            background: linear-gradient(135deg, #ffffff, #fafaf8);
             padding: 2rem;
             border: 1px solid #e5e5e5;
+            border-radius: 12px;
             text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #c5b783;
         }
 
         .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #c5b783;
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #c5b783, #8a7a4b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 0.5rem;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
         .stat-label {
-            color: #666666;
-            font-size: 0.95rem;
-            font-weight: 500;
+            color: #555555;
+            font-size: 0.85rem;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-subtitle {
+            color: #888888;
+            font-size: 0.75rem;
+            font-style: italic;
+            margin-top: 0.5rem;
         }
 
         .team-results {
@@ -60,26 +146,36 @@
             border-collapse: collapse;
             margin-bottom: 2rem;
             background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         .team-table th,
         .team-table td {
-            padding: 1rem;
+            padding: 1.25rem 1rem;
             text-align: left;
             border-bottom: 1px solid #e5e5e5;
         }
 
         .team-table th {
-            background: #c5b783;
-            color: #2c2c2c;
-            font-weight: 600;
+            background: linear-gradient(135deg, #c5b783, #8a7a4b);
+            color: white;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            font-size: 0.875rem;
+            font-size: 0.75rem;
+            position: relative;
         }
 
         .team-table tr:hover {
-            background: #fafaf8;
+            background: linear-gradient(135deg, #fafaf8, #f5f5f5);
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+
+        .team-table tbody tr {
+            transition: all 0.2s ease;
         }
 
         .score-cell {
@@ -192,22 +288,39 @@
         }
 
         .btn-admin {
-            background: #c5b783;
-            color: #2c2c2c;
+            background: linear-gradient(135deg, #c5b783, #8a7a4b);
+            color: white;
             border: none;
-            padding: 0.75rem 2rem;
-            border-radius: 0;
+            padding: 0.875rem 2rem;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
             margin: 0.5rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             font-size: 0.875rem;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
         }
 
         .btn-admin:hover {
-            background: #b8a56f;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            background: linear-gradient(135deg, #8a7a4b, #6d6138);
+        }
+
+        .btn-admin:active {
+            transform: translateY(0);
+        }
+
+        .btn-admin:disabled {
+            background: #cccccc;
+            color: #888888;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         .btn-secondary {
@@ -280,20 +393,21 @@
 </head>
 <body>
     <div class="admin-container">
-        <header style="background: #fff; border-bottom: 2px solid #c5b783; padding: 2rem 3rem; border-radius: 0; margin-bottom: 0;">
+        <div class="admin-header">
+            <h1>Assessment Analytics Dashboard</h1>
+            <p>Team Evaluation Results & Management • Ivey EdTech Lab</p>
+        </div>
+        
+        <div class="admin-nav">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <div style="font-size: 0.7rem; background: #c5b783; color: #2c2c2c; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 0; font-weight: 900; letter-spacing: 0.1em;">IVEY</div>
-                    <div>
-                        <h1 style="font-size: 1.75rem; color: #2c2c2c; margin: 0; font-weight: 700; letter-spacing: -0.025em;">Assessment Analytics</h1>
-                        <p style="font-size: 0.95rem; color: #666666; margin: 0; font-weight: 400;">Team Evaluation Results & Grade Assignment</p>
-                    </div>
+                <div>
+                    <h2 style="margin: 0; color: #2c2c2c; font-size: 1.1rem;">Dashboard Controls</h2>
                 </div>
                 <div>
-                    <a href="/" style="background: #c5b783; color: #2c2c2c; padding: 0.75rem 1.5rem; border-radius: 0; text-decoration: none; font-size: 0.875rem; font-weight: 600; border: none; text-transform: uppercase; letter-spacing: 0.05em;">← Back to Form</a>
+                    <a href="/" style="background: linear-gradient(135deg, #6c757d, #495057); color: white; padding: 0.75rem 1.25rem; border-radius: 8px; text-decoration: none; font-size: 0.875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s ease;">Assessment Form</a>
                 </div>
             </div>
-        </header>
+        </div>
 
         <div id="loading" class="loading-admin">Loading assessment data...</div>
         
@@ -382,13 +496,18 @@
             </div>
 
             <div class="actions-section">
-                <h3 style="margin-bottom: 1.5rem; color: #2c2c2c;">Group Management</h3>
+                <div style="margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e5e5;">
+                    <h3 style="margin: 0 0 0.25rem 0; color: #2c2c2c; font-size: 1.5rem;">Group Management</h3>
+                    <p style="margin: 0; color: #666666; font-size: 0.9rem;">Create and organize assessment groups</p>
+                </div>
                 
                 <!-- Group Management Section -->
-                <div style="background: #fafaf8; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid #e5e5e5;">
-                    <h4 style="margin-bottom: 1rem; color: #2c2c2c;">Create New Assessment Group</h4>
-                    <p style="font-size: 0.9rem; color: #666666; margin-bottom: 1rem;">
-                        Create groups for different class sessions, terms, or assessment periods. Each group has its own unique access links.
+                <div style="background: linear-gradient(135deg, #fafaf8, #ffffff); padding: 2rem; margin-bottom: 2rem; border: 1px solid #e5e5e5; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4 style="margin: 0; color: #2c2c2c; font-size: 1.2rem;">Create New Assessment Group</h4>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #666666; margin-bottom: 1.5rem;">
+                        Create groups for different class sessions, terms, or assessment periods. Each group has its own unique access links and email settings.
                     </p>
                     
                     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
@@ -407,32 +526,37 @@
                     </div>
                 </div>
                 
-                <h3 style="margin-bottom: 1.5rem; color: #2c2c2c;">Team Management</h3>
+                <div style="margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e5e5;">
+                    <h3 style="margin: 0 0 0.25rem 0; color: #2c2c2c; font-size: 1.5rem;">Team Management</h3>
+                    <p style="margin: 0; color: #666666; font-size: 0.9rem;">Upload and organize team data</p>
+                </div>
                 
                 <!-- CSV Upload Section -->
-                <div style="background: #fafaf8; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid #e5e5e5;">
-                    <h4 style="margin-bottom: 1rem; color: #2c2c2c;">Upload Teams from CSV</h4>
-                    <p style="font-size: 0.9rem; color: #666666; margin-bottom: 1rem;">
+                <div style="background: linear-gradient(135deg, #fafaf8, #ffffff); padding: 2rem; margin-bottom: 2rem; border: 1px solid #e5e5e5; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4 style="margin: 0; color: #2c2c2c; font-size: 1.2rem;">Upload Teams from CSV</h4>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #666666; margin-bottom: 1.5rem;">
                         Upload a CSV file containing team names and member information. Download the template below to get started with the correct format.
                     </p>
                     
                     <!-- Template Download Section -->
                     <div style="background: #e8f5e8; border: 2px solid #4caf50; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
                         <div>
-                            <p style="margin: 0; color: #2e7d32; font-weight: 600;">📥 Download CSV Template</p>
+                            <p style="margin: 0; color: #2e7d32; font-weight: 600;">Download CSV Template</p>
                             <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: #2e7d32;">
                                 Get a properly formatted CSV file with sample data to guide your team setup.
                             </p>
                         </div>
                         <button id="download-template" class="btn-admin" style="background: #4caf50; white-space: nowrap;">
-                            📥 Download Template
+                            Download Template
                         </button>
                     </div>
                     
                     <!-- Group Selection for Upload -->
                     <div style="background: #e3f2fd; border: 2px solid #2196f3; padding: 1rem; margin-bottom: 1rem; border-radius: 4px;">
                         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
-                            <label for="upload-group-select" style="color: #1565c0; font-weight: 600;">📋 Assign teams to group:</label>
+                            <label for="upload-group-select" style="color: #1565c0; font-weight: 600;">Assign teams to group:</label>
                             <select id="upload-group-select" style="padding: 0.5rem; border: 2px solid #c5b783; background: white; font-size: 1rem; min-width: 150px;">
                                 <option value="default">Default</option>
                             </select>
@@ -496,6 +620,9 @@
     <script>
         class AssessmentAnalytics {
             constructor() {
+                // Make instance globally accessible for button clicks
+                window.assessmentAnalytics = this;
+                
                 this.loadGroups();
                 this.loadData();
                 this.bindEvents();
@@ -1061,17 +1188,33 @@
                 if (!groupsList) return;
                 
                 groupsList.innerHTML = groups.map(group => `
-                    <div style="background: white; padding: 1rem; border: 1px solid #e5e5e5; border-radius: 4px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <h6 style="margin: 0; color: #2c2c2c; font-weight: 600;">${group.charAt(0).toUpperCase() + group.slice(1)}</h6>
-                                <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: #666;">
-                                    <a href="?group=${encodeURIComponent(group)}" style="color: #c5b783; text-decoration: none;">View Group</a>
-                                </p>
+                    <div style="background: white; padding: 1.5rem; border: 1px solid #e5e5e5; border-radius: 4px;">
+                        <div style="margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <h6 style="margin: 0; color: #2c2c2c; font-weight: 600; font-size: 1.1rem;">${group.charAt(0).toUpperCase() + group.slice(1)}</h6>
+                                <button onclick="window.assessmentAnalytics.deleteGroup('${group}')" 
+                                        style="background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer;"
+                                        title="Delete Group">Delete</button>
                             </div>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <button onclick="copyGroupLinks('${group}')" class="btn-admin" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Copy Links</button>
-                            </div>
+                            <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.85rem; color: #666;">
+                                <a href="?group=${encodeURIComponent(group)}" style="color: #c5b783; text-decoration: none;">View Group Results</a> •
+                                <a href="/assess/${encodeURIComponent(group)}" style="color: #28a745; text-decoration: none;" target="_blank">Assessment Link</a>
+                            </p>
+                        </div>
+                        
+                        <div style="margin-bottom: 1rem;">
+                            <label style="font-size: 0.9rem; font-weight: 600; color: #2c2c2c; display: block; margin-bottom: 0.25rem;">📧 Email Notifications:</label>
+                            <input type="email" 
+                                   id="email-${group}" 
+                                   placeholder="Enter email for results (e.g., professor@ivey.ca)"
+                                   style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem;"
+                                   value="${this.getGroupEmail(group)}"
+                                   onchange="window.assessmentAnalytics.updateGroupEmail('${group}', this.value)">
+                            <p style="font-size: 0.75rem; color: #666; margin: 0.25rem 0 0 0;">Results will be emailed here when judges complete assessments</p>
+                        </div>
+                        
+                        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                            <button onclick="copyGroupLinks('${group}')" class="btn-admin" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">📋 Copy Links</button>
                         </div>
                     </div>
                 `).join('');
@@ -1081,6 +1224,12 @@
                 const statusDiv = document.getElementById('create-group-status');
                 statusDiv.style.display = 'block';
                 statusDiv.textContent = message;
+                statusDiv.style.fontSize = '1rem';
+                statusDiv.style.fontWeight = '600';
+                statusDiv.style.padding = '1rem 1.5rem';
+                statusDiv.style.borderRadius = '8px';
+                statusDiv.style.border = '2px solid';
+                statusDiv.style.marginTop = '1rem';
                 
                 // Style based on type
                 if (type === 'success') {
@@ -1102,6 +1251,81 @@
                     setTimeout(() => {
                         statusDiv.style.display = 'none';
                     }, 5000);
+                }
+            }
+
+            async deleteGroup(groupName) {
+                const confirmed = confirm(`⚠️  DELETE GROUP: ${groupName}\n\n❌ This will permanently delete the group and cannot be undone.\n\n⚠️  NOTE: Groups with existing teams or assessments cannot be deleted.\n\nContinue with deletion?`);
+                
+                if (!confirmed) return;
+
+                // Show loading state
+                const deleteButton = event.target;
+                const originalText = deleteButton.innerHTML;
+                deleteButton.innerHTML = '⏳ Deleting...';
+                deleteButton.disabled = true;
+
+                try {
+                    const response = await fetch(`/api/groups/${encodeURIComponent(groupName)}`, {
+                        method: 'DELETE'
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        this.showCreateGroupStatus(`✅ SUCCESS: Group "${groupName}" deleted successfully!`, 'success');
+                        // Refresh the groups list
+                        await this.loadGroups();
+                    } else {
+                        // Provide more helpful error messages
+                        let errorMessage = result.error;
+                        if (errorMessage.includes('existing teams')) {
+                            errorMessage = `❌ Cannot delete "${groupName}" - it contains teams. Remove all teams first, then try again.`;
+                        } else if (errorMessage.includes('existing assessments')) {
+                            errorMessage = `❌ Cannot delete "${groupName}" - it contains assessment data. Clear assessments first, then try again.`;
+                        }
+                        this.showCreateGroupStatus(errorMessage, 'error');
+                        
+                        // Reset button
+                        deleteButton.innerHTML = originalText;
+                        deleteButton.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Delete group error:', error);
+                    this.showCreateGroupStatus(`❌ ERROR: Failed to delete group - ${error.message}`, 'error');
+                    
+                    // Reset button
+                    deleteButton.innerHTML = originalText;
+                    deleteButton.disabled = false;
+                }
+            }
+
+            getGroupEmail(groupName) {
+                // For now, return empty string. In future, this will load from server
+                return this.groupEmails && this.groupEmails[groupName] ? this.groupEmails[groupName] : '';
+            }
+
+            async updateGroupEmail(groupName, email) {
+                if (!this.groupEmails) this.groupEmails = {};
+                this.groupEmails[groupName] = email;
+
+                // TODO: Save to server - for now just store locally
+                try {
+                    const response = await fetch(`/api/groups/${encodeURIComponent(groupName)}/email`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ email: email })
+                    });
+
+                    if (response.ok) {
+                        console.log(`Email updated for group ${groupName}: ${email}`);
+                    } else {
+                        console.warn(`Failed to save email for group ${groupName}`);
+                    }
+                } catch (error) {
+                    console.warn('Email save error:', error);
                 }
             }
 

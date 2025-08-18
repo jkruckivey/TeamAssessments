@@ -64,6 +64,7 @@ let assessments = [];
 let teams = [];
 let judges = [];
 let groups = ['default']; // Explicitly track groups
+let groupEmails = {}; // Track email notifications for each group
 
 // Initialize data
 async function initializeData() {
@@ -97,6 +98,14 @@ async function initializeData() {
             console.log('No existing group data found, using defaults');
             groups = ['default'];
         }
+
+        try {
+            const groupEmailData = await fs.readFile(path.join(DATA_DIR, 'group-emails.json'), 'utf8');
+            groupEmails = JSON.parse(groupEmailData);
+        } catch (error) {
+            console.log('No existing group email data found, using defaults');
+            groupEmails = {};
+        }
     } catch (error) {
         console.error('Error initializing data:', error);
     }
@@ -110,6 +119,7 @@ async function saveData() {
         await fs.writeFile(path.join(DATA_DIR, 'teams.json'), JSON.stringify(teams, null, 2));
         await fs.writeFile(path.join(DATA_DIR, 'judges.json'), JSON.stringify(judges, null, 2));
         await fs.writeFile(path.join(DATA_DIR, 'groups.json'), JSON.stringify(groups, null, 2));
+        await fs.writeFile(path.join(DATA_DIR, 'group-emails.json'), JSON.stringify(groupEmails, null, 2));
     } catch (error) {
         console.error('Error saving data:', error);
     }
@@ -141,10 +151,23 @@ async function sendAssessmentNotification(assessment) {
                           assessment.ratings.actionPlan + assessment.ratings.overall;
         const totalScore = ((totalRating / 20) * 100).toFixed(1);
         
+        // Find the team to get the group information
+        const team = teams.find(t => t.teamName === assessment.teamName);
+        const groupName = team ? team.group : 'default';
+        
+        // Get the email for this group, no fallback - skip email if not configured
+        const recipientEmail = groupEmails[groupName];
+        
+        // Skip email if no recipient configured for this group
+        if (!recipientEmail) {
+            console.log(`No email configured for group ${groupName}, skipping notification`);
+            return true;
+        }
+        
         const mailOptions = {
             from: process.env.EMAIL_USER || 'team-assessments@ivey.ca',
-            to: 'jkrcuk@ivey.ca',
-            subject: `New Team Assessment Submitted - ${assessment.teamName}`,
+            to: recipientEmail,
+            subject: `New Assessment: ${assessment.teamName} (${groupName}) - Judge: ${assessment.judgeName}`,
             html: `
                 <!DOCTYPE html>
                 <html>
@@ -173,6 +196,7 @@ async function sendAssessmentNotification(assessment) {
                             <h2>Assessment Summary</h2>
                             <p><strong>Judge:</strong> ${assessment.judgeName}</p>
                             <p><strong>Team:</strong> ${assessment.teamName}</p>
+                            <p><strong>Group/Classroom:</strong> ${groupName}</p>
                             <p><strong>Overall Score:</strong> <span class="score-highlight">${totalScore}%</span></p>
                             <p><strong>Submitted:</strong> ${new Date(assessment.submittedAt).toLocaleString()}</p>
                         </div>
@@ -227,6 +251,125 @@ async function sendAssessmentNotification(assessment) {
         
     } catch (error) {
         console.error('Error sending email notification:', error.message);
+        return false;
+    }
+}
+
+// Send completion notification email
+async function sendCompletionNotification(completionData) {
+    try {
+        const { judgeName, groupName, assessments, teams, completedAt } = completionData;
+        
+        // Get the email for this group, no fallback - skip email if not configured
+        const recipientEmail = groupEmails[groupName];
+        
+        // Skip email if no recipient configured for this group
+        if (!recipientEmail) {
+            console.log(`No email configured for group ${groupName}, skipping completion notification`);
+            return true;
+        }
+        
+        // Calculate summary statistics
+        const totalAssessments = assessments.length;
+        const teamScores = assessments.map(a => {
+            const total = a.ratings.complexity + a.ratings.storytelling + a.ratings.actionPlan + a.ratings.overall;
+            return {
+                teamName: a.teamName,
+                score: ((total / 20) * 100).toFixed(1),
+                ratings: a.ratings
+            };
+        });
+        const averageScore = (teamScores.reduce((sum, team) => sum + parseFloat(team.score), 0) / totalAssessments).toFixed(1);
+        
+        const mailOptions = {
+            from: process.env.EMAIL_USER || 'team-assessments@ivey.ca',
+            to: recipientEmail,
+            subject: `✅ Judge Complete: ${judgeName} finished assessing ${groupName} (${totalAssessments} teams)`,
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .header { background: #28a745; color: white; padding: 20px; text-align: center; }
+                        .content { padding: 20px; }
+                        .completion-details { background: #d4edda; padding: 15px; margin: 15px 0; border-left: 4px solid #28a745; border-radius: 4px; }
+                        .team-scores { margin: 20px 0; }
+                        .team-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr; gap: 10px; padding: 8px; border-bottom: 1px solid #eee; align-items: center; }
+                        .team-header { font-weight: bold; background: #f8f9fa; border-bottom: 2px solid #dee2e6; }
+                        .score-highlight { font-size: 1.1em; font-weight: bold; color: #28a745; }
+                        .summary-stats { background: #f8f9fa; padding: 15px; margin: 15px 0; border-radius: 4px; }
+                        .footer { background: #f5f5f5; padding: 15px; text-align: center; font-size: 0.9em; color: #666; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>🎉 Judge Assessment Complete!</h1>
+                        <p>Ivey EdTech Lab • Team Assessment Platform</p>
+                    </div>
+                    
+                    <div class="content">
+                        <div class="completion-details">
+                            <h2>Completion Summary</h2>
+                            <p><strong>Judge:</strong> ${judgeName}</p>
+                            <p><strong>Classroom:</strong> ${groupName}</p>
+                            <p><strong>Teams Assessed:</strong> ${totalAssessments}</p>
+                            <p><strong>Average Score:</strong> <span class="score-highlight">${averageScore}%</span></p>
+                            <p><strong>Completed At:</strong> ${new Date(completedAt).toLocaleString()}</p>
+                        </div>
+                        
+                        <div class="summary-stats">
+                            <h3>📊 Quick Statistics</h3>
+                            <p><strong>Highest Score:</strong> ${Math.max(...teamScores.map(t => parseFloat(t.score)))}%</p>
+                            <p><strong>Lowest Score:</strong> ${Math.min(...teamScores.map(t => parseFloat(t.score)))}%</p>
+                            <p><strong>Teams Above 80%:</strong> ${teamScores.filter(t => parseFloat(t.score) >= 80).length}</p>
+                        </div>
+
+                        <h3>📋 All Team Scores</h3>
+                        <div class="team-scores">
+                            <div class="team-row team-header">
+                                <div>Team Name</div>
+                                <div>Overall</div>
+                                <div>Complexity</div>
+                                <div>Story</div>
+                                <div>Action</div>
+                                <div>Score</div>
+                            </div>
+                            ${teamScores.map(team => `
+                                <div class="team-row">
+                                    <div><strong>${team.teamName}</strong></div>
+                                    <div>${team.ratings.overall}/5</div>
+                                    <div>${team.ratings.complexity}/5</div>
+                                    <div>${team.ratings.storytelling}/5</div>
+                                    <div>${team.ratings.actionPlan}/5</div>
+                                    <div class="score-highlight">${team.score}%</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <p style="margin-top: 25px;">
+                            <a href="http://localhost:${PORT}/admin" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
+                                📊 View Full Results Dashboard
+                            </a>
+                        </p>
+                    </div>
+                    
+                    <div class="footer">
+                        <p><strong>All assessments for ${groupName} by ${judgeName} are now complete.</strong></p>
+                        <p>The judge can still edit individual assessments if needed, but results have been finalized.</p>
+                    </div>
+                </body>
+                </html>
+            `
+        };
+        
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ Completion notification sent for judge: ${judgeName} in group: ${groupName}`);
+        return true;
+        
+    } catch (error) {
+        console.error('Error sending completion notification:', error.message);
         return false;
     }
 }
@@ -434,6 +577,16 @@ app.get('/team-results', (req, res) => {
     res.sendFile(path.join(__dirname, 'team-results.html'));
 });
 
+// Serve group-specific assessment form
+app.get('/assess/:groupName', (req, res) => {
+    res.sendFile(path.join(__dirname, 'group-assessment.html'));
+});
+
+// Serve batch assessment form (fallback)
+app.get('/batch-assessment', (req, res) => {
+    res.sendFile(path.join(__dirname, 'batch-assessment.html'));
+});
+
 // Get all available groups
 app.get('/api/groups', (req, res) => {
     try {
@@ -498,23 +651,154 @@ app.post('/api/groups', (req, res) => {
     }
 });
 
+// Delete a group
+app.delete('/api/groups/:groupName', (req, res) => {
+    try {
+        const groupName = req.params.groupName.trim();
+        
+        if (!groupName) {
+            return res.status(400).json({ error: 'Group name is required' });
+        }
+        
+        // Check if group exists
+        if (!groups.includes(groupName)) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+        
+        // Check if group has teams or assessments
+        const groupHasTeams = teams.some(team => normalizeGroup(team.group) === normalizeGroup(groupName));
+        const groupHasAssessments = assessments.some(assessment => normalizeGroup(assessment.group) === normalizeGroup(groupName));
+        
+        if (groupHasTeams) {
+            return res.status(400).json({ 
+                error: 'Cannot delete group with existing teams. Remove teams first.' 
+            });
+        }
+        
+        if (groupHasAssessments) {
+            return res.status(400).json({ 
+                error: 'Cannot delete group with existing assessments. Remove assessments first.' 
+            });
+        }
+        
+        // Remove group from the list
+        groups = groups.filter(group => group !== groupName);
+        
+        // Save the updated groups list
+        saveData();
+        
+        console.log(`Deleted group: ${groupName}`);
+        res.json({ 
+            success: true, 
+            message: `Group '${groupName}' deleted successfully` 
+        });
+        
+    } catch (error) {
+        console.error('Error deleting group:', error);
+        res.status(500).json({ error: 'Failed to delete group' });
+    }
+});
+
+// Update group email notification
+app.put('/api/groups/:groupName/email', (req, res) => {
+    try {
+        const groupName = req.params.groupName.trim();
+        const { email } = req.body;
+        
+        if (!groupName) {
+            return res.status(400).json({ error: 'Group name is required' });
+        }
+        
+        // Check if group exists
+        if (!groups.includes(groupName)) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+        
+        // Validate email format if provided
+        if (email && email.trim()) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email.trim())) {
+                return res.status(400).json({ error: 'Invalid email format' });
+            }
+            groupEmails[groupName] = email.trim();
+        } else {
+            // Remove email if empty
+            delete groupEmails[groupName];
+        }
+        
+        // Save the updated email data
+        saveData();
+        
+        console.log(`Updated email for group ${groupName}: ${groupEmails[groupName] || 'removed'}`);
+        res.json({ 
+            success: true, 
+            message: `Email updated for group '${groupName}'`,
+            email: groupEmails[groupName] || null
+        });
+        
+    } catch (error) {
+        console.error('Error updating group email:', error);
+        res.status(500).json({ error: 'Failed to update group email' });
+    }
+});
+
+// Get group email information
+app.get('/api/groups/:groupName/email', (req, res) => {
+    try {
+        const groupName = req.params.groupName.trim();
+        
+        if (!groups.includes(groupName)) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+        
+        res.json({ 
+            groupName: groupName,
+            email: groupEmails[groupName] || null
+        });
+        
+    } catch (error) {
+        console.error('Error getting group email:', error);
+        res.status(500).json({ error: 'Failed to get group email' });
+    }
+});
+
 // Get all teams
 app.get('/api/teams', (req, res) => {
-  const group = normalizeGroup(req.query.group);
-  const result = teams.filter(t => normalizeGroup(t.group) === group);
-  res.json(result);
+  if (req.query.group) {
+    // Filter by group if specified
+    const group = normalizeGroup(req.query.group);
+    const result = teams.filter(t => normalizeGroup(t.group) === group);
+    res.json(result);
+  } else {
+    // Return all teams with teams wrapper for admin compatibility
+    res.json({ teams: teams });
+  }
 });
 
 // Submit assessment
 app.post('/api/assessments', async (req, res) => {
   try {
     const { judgeName, teamName, ratings, comments, group: bodyGroup } = req.body;
-    const group = normalizeGroup(bodyGroup || req.query.group);
+    
     if (!judgeName || !teamName || !ratings) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    const assessment = {
-      id: uuidv4(),
+
+    // Find the team to get the correct group
+    // If multiple teams have same name, prefer non-default groups
+    const matchingTeams = teams.filter(t => (t.name || t.teamName) === teamName.trim());
+    const team = matchingTeams.find(t => normalizeGroup(t.group) !== 'default') || matchingTeams[0];
+    const group = team ? normalizeGroup(team.group) : normalizeGroup(bodyGroup || req.query.group);
+    
+    console.log(`Assessment submission: teamName="${teamName}", found ${matchingTeams.length} matching teams, selected:`, team ? `group=${team.group}` : 'not found', `final group=${group}`);
+    
+    // Check if assessment already exists for this judge-team combination
+    const existingIndex = assessments.findIndex(a => 
+      a.judgeName.toLowerCase() === judgeName.trim().toLowerCase() && 
+      a.teamName === teamName.trim()
+    );
+
+    const assessmentData = {
       judgeName: judgeName.trim(),
       teamName: teamName.trim(),
       group,
@@ -533,13 +817,26 @@ app.post('/api/assessments', async (req, res) => {
       submittedAt: new Date().toISOString()
     };
 
-    assessments.push(assessment);
+    let assessment;
+    if (existingIndex >= 0) {
+      // Update existing assessment
+      assessment = {
+        ...assessments[existingIndex],
+        ...assessmentData
+      };
+      assessments[existingIndex] = assessment;
+      console.log(`Updated existing assessment for ${judgeName} - ${teamName}`);
+    } else {
+      // Create new assessment
+      assessment = {
+        id: uuidv4(),
+        ...assessmentData
+      };
+      assessments.push(assessment);
+      console.log(`Created new assessment for ${judgeName} - ${teamName}`);
+    }
 
-    // Send email notification (don't wait for it to complete)
-    sendAssessmentNotification(assessment).catch(error => {
-      console.error('Failed to send email notification:', error.message);
-    });
-
+    // Note: Email notifications are now only sent when judge marks complete
     await saveData();
 
     res.json({ 
@@ -662,6 +959,89 @@ app.get('/api/assessments/team/:teamName', (req, res) => {
         a.teamName.toLowerCase() === teamName.toLowerCase() && (!group || normalizeGroup(a.group) === group)
     );
     res.json(teamAssessments);
+});
+
+// Get assessments for a specific group
+app.get('/api/assessments/group/:groupName', (req, res) => {
+    try {
+        const groupName = normalizeGroup(req.params.groupName);
+        
+        // Get teams in this group
+        const groupTeams = teams.filter(team => normalizeGroup(team.group) === groupName);
+        const groupTeamNames = groupTeams.map(team => team.name || team.teamName);
+        
+        console.log(`Group ${groupName}: found ${groupTeams.length} teams:`, groupTeamNames);
+        
+        // Get assessments for teams in this group
+        const groupAssessments = assessments.filter(assessment => 
+            groupTeamNames.includes(assessment.teamName)
+        );
+        
+        console.log(`Found ${groupAssessments.length} assessments for group ${groupName}`);
+        
+        res.json({ assessments: groupAssessments });
+    } catch (error) {
+        console.error('Error getting group assessments:', error);
+        res.status(500).json({ error: 'Failed to get group assessments' });
+    }
+});
+
+// Mark assessments complete for a judge
+app.post('/api/assessments/complete', async (req, res) => {
+    try {
+        const { judgeName, groupName } = req.body;
+        
+        if (!judgeName || !groupName) {
+            return res.status(400).json({ error: 'Missing judgeName or groupName' });
+        }
+
+        const normalizedGroup = normalizeGroup(groupName);
+        
+        // Get teams in this group
+        const groupTeams = teams.filter(team => normalizeGroup(team.group) === normalizedGroup);
+        const groupTeamNames = groupTeams.map(team => team.name || team.teamName);
+        
+        // Get this judge's assessments for this group
+        const judgeAssessments = assessments.filter(assessment => 
+            assessment.judgeName.toLowerCase() === judgeName.toLowerCase() &&
+            groupTeamNames.includes(assessment.teamName || assessment.name)
+        );
+
+        // Get unique teams assessed by this judge (remove duplicates)
+        const uniqueTeamsAssessed = [...new Set(judgeAssessments.map(a => a.teamName || a.name))];
+
+        // Verify judge has assessed all teams
+        if (uniqueTeamsAssessed.length !== groupTeams.length) {
+            return res.status(400).json({ 
+                error: `Judge has only assessed ${uniqueTeamsAssessed.length} of ${groupTeams.length} teams` 
+            });
+        }
+
+        console.log(`Judge ${judgeName} has assessed all ${uniqueTeamsAssessed.length} teams in ${normalizedGroup}`);
+
+        // Send completion email notification
+        const completionData = {
+            judgeName,
+            groupName: normalizedGroup,
+            assessments: judgeAssessments,
+            teams: groupTeams,
+            completedAt: new Date().toISOString()
+        };
+
+        sendCompletionNotification(completionData).catch(error => {
+            console.error('Failed to send completion notification:', error.message);
+        });
+
+        res.json({ 
+            success: true, 
+            message: 'Assessments marked complete and admin notified',
+            assessmentsCount: judgeAssessments.length
+        });
+
+    } catch (error) {
+        console.error('Error marking assessments complete:', error);
+        res.status(500).json({ error: 'Failed to mark assessments complete' });
+    }
 });
 
 // Analytics (scoped by group if provided)
@@ -802,10 +1182,16 @@ app.post('/api/email/results', async (req, res) => {
         });
         const csvContent = csvHeader + csvRows.join('\n');
         
-        // Email recipients - configurable
+        // Email recipients - only send if configured via environment variable
         const recipients = process.env.PROGRAM_TEAM_EMAILS ? 
             process.env.PROGRAM_TEAM_EMAILS.split(',').map(email => email.trim()) : 
-            ['jkrcuk@ivey.ca']; // fallback
+            [];
+            
+        // Skip email if no recipients configured
+        if (recipients.length === 0) {
+            console.log('No PROGRAM_TEAM_EMAILS configured, skipping PIN notification');
+            return true;
+        }
         
         const mailOptions = {
             from: process.env.EMAIL_USER || 'team-assessments@ivey.ca',

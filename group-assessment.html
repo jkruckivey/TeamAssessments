@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment Form - Ivey EdTech Lab</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .group-header {
+            background: linear-gradient(135deg, #c5b783, #8a7a4b);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .group-header h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.5rem;
+        }
+
+        .group-info {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .team-dropdown {
+            position: relative;
+        }
+
+        .team-dropdown select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+        }
+
+        .team-dropdown select:focus {
+            border-color: #c5b783;
+            outline: none;
+        }
+
+        .team-members-display {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #666;
+            display: none;
+        }
+
+        .teams-completed {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .teams-completed h3 {
+            color: #155724;
+            margin: 0 0 10px 0;
+            font-size: 1.1rem;
+        }
+
+        .completed-team {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin: 2px;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .judge-info {
+            background: #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-icon">IVEY</div>
+                    <div class="header-text">
+                        <h1>Team Assessment Form</h1>
+                        <p class="subtitle">MBA Systems Challenge • Judge Evaluation Portal</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <a href="/team-results" class="results-link" style="background: #c5b783; color: #2c2c2c; padding: 0.5rem 1rem; text-decoration: none; font-size: 0.875rem; font-weight: 600; margin-right: 0.5rem;">View Results</a>
+                    <a href="/admin" class="admin-link">Admin Dashboard</a>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="loading-spinner" id="loading">
+                <p>Loading classroom information...</p>
+            </div>
+
+            <div class="error-message" id="error-message">
+                <p>Failed to load classroom information. Please check the URL or contact support.</p>
+            </div>
+
+            <div id="main-content" style="display: none;">
+                <div class="group-header">
+                    <h2 id="group-name">Classroom Assessment</h2>
+                    <div class="group-info" id="group-info">
+                        <div id="judge-names"></div>
+                        <div id="team-count"></div>
+                    </div>
+                </div>
+
+                <div class="teams-completed" id="completed-teams" style="display: none;">
+                    <h3>Teams Already Assessed:</h3>
+                    <div id="completed-list"></div>
+                </div>
+
+                <div class="edit-section" id="edit-section" style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 20px 0; display: none;">
+                    <h3 style="color: #856404; margin: 0 0 15px 0;">📝 Edit Previous Assessment</h3>
+                    <p style="color: #856404; margin-bottom: 15px;">You can modify a previously submitted assessment. Select your name and team to load the existing assessment.</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; margin-bottom: 15px;">
+                        <div>
+                            <label style="font-weight: 600; color: #856404; display: block; margin-bottom: 5px;">Judge Name:</label>
+                            <input type="text" id="edit-judge-name" placeholder="Enter your name" style="width: 100%; padding: 8px; border: 1px solid #ffeaa7; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="font-weight: 600; color: #856404; display: block; margin-bottom: 5px;">Team Name:</label>
+                            <select id="edit-team-select" style="width: 100%; padding: 8px; border: 1px solid #ffeaa7; border-radius: 4px;">
+                                <option value="">Select team...</option>
+                            </select>
+                        </div>
+                        <button id="load-assessment" class="nav-btn btn-secondary" style="padding: 8px 16px;">Load Assessment</button>
+                    </div>
+                    
+                    <div id="edit-status" style="display: none; padding: 10px; border-radius: 4px; margin-bottom: 10px;"></div>
+                    
+                    <button id="toggle-edit" class="nav-btn btn-outline" style="font-size: 0.9rem;">Hide Edit Section</button>
+                </div>
+
+                <div style="text-align: center; margin: 20px 0;">
+                    <button id="show-edit" class="nav-btn btn-outline" style="display: none;">📝 Edit Previous Assessment</button>
+                </div>
+
+                <div class="form-section">
+                    <div class="instructions">
+                        <h2>Assessment Instructions</h2>
+                        <p>Please rate each team on the following criteria using a scale from <strong>1 (Fair)</strong> to <strong>5 (Excellent)</strong>. Comments are encouraged to provide detailed feedback.</p>
+                        <p class="hover-note"><em>Hover over rating buttons for detailed scale definitions.</em></p>
+                    </div>
+
+                    <form id="assessment-form" class="assessment-form">
+                        <div class="form-group">
+                            <label for="judge-name">Your Name *</label>
+                            <input type="text" id="judge-name" name="judgeName" required>
+                            <div class="judge-info" id="suggested-judges" style="display: none;">
+                                <strong>Assigned judges for this classroom:</strong>
+                                <div id="judge-buttons"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="team-select">Select Team to Assess *</label>
+                            <div class="team-dropdown">
+                                <select id="team-select" name="teamName" required>
+                                    <option value="">Choose a team...</option>
+                                </select>
+                                <div class="team-members-display" id="team-members"></div>
+                            </div>
+                        </div>
+
+                        <div class="criteria-section">
+                            <h3>Assessment Criteria</h3>
+                            <p class="criteria-note">Rate each criterion from 1 (Fair) to 5 (Excellent)</p>
+
+                            <!-- Criterion 1: System Complexity Understanding -->
+                            <div class="criterion-group">
+                                <div class="criterion-header">
+                                    <h4>1. Demonstrates a good understanding of the complexity of the system</h4>
+                                </div>
+                                <div class="rating-section">
+                                    <div class="rating-scale">
+                                        <div class="rating-inputs">
+                                            <label class="rating-option" title="1 - Fair: Poor performance requiring significant improvement">
+                                                <input type="radio" name="complexity" value="1" required>
+                                                <span class="rating-label">1 - Fair</span>
+                                            </label>
+                                            <label class="rating-option" title="2 - Needs Improvement: Below average performance with noticeable gaps">
+                                                <input type="radio" name="complexity" value="2">
+                                                <span class="rating-label">2</span>
+                                            </label>
+                                            <label class="rating-option" title="3 - Satisfactory: Adequate performance that meets basic expectations">
+                                                <input type="radio" name="complexity" value="3">
+                                                <span class="rating-label">3</span>
+                                            </label>
+                                            <label class="rating-option" title="4 - Good: Above average performance that meets most expectations">
+                                                <input type="radio" name="complexity" value="4">
+                                                <span class="rating-label">4</span>
+                                            </label>
+                                            <label class="rating-option" title="5 - Excellent: Exceptional performance that exceeds expectations">
+                                                <input type="radio" name="complexity" value="5">
+                                                <span class="rating-label">5 - Excellent</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="comment-section">
+                                        <label for="complexity-comments">Comments (optional)</label>
+                                        <textarea id="complexity-comments" name="complexityComments" rows="3" placeholder="Provide specific feedback about the team's understanding of system complexity..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Criterion 2: Clear Storytelling -->
+                            <div class="criterion-group">
+                                <div class="criterion-header">
+                                    <h4>2. Demonstrates the ability to simplify the complexity with a clear story</h4>
+                                </div>
+                                <div class="rating-section">
+                                    <div class="rating-scale">
+                                        <div class="rating-inputs">
+                                            <label class="rating-option" title="1 - Fair: Poor performance requiring significant improvement">
+                                                <input type="radio" name="storytelling" value="1" required>
+                                                <span class="rating-label">1 - Fair</span>
+                                            </label>
+                                            <label class="rating-option" title="2 - Needs Improvement: Below average performance with noticeable gaps">
+                                                <input type="radio" name="storytelling" value="2">
+                                                <span class="rating-label">2</span>
+                                            </label>
+                                            <label class="rating-option" title="3 - Satisfactory: Adequate performance that meets basic expectations">
+                                                <input type="radio" name="storytelling" value="3">
+                                                <span class="rating-label">3</span>
+                                            </label>
+                                            <label class="rating-option" title="4 - Good: Above average performance that meets most expectations">
+                                                <input type="radio" name="storytelling" value="4">
+                                                <span class="rating-label">4</span>
+                                            </label>
+                                            <label class="rating-option" title="5 - Excellent: Exceptional performance that exceeds expectations">
+                                                <input type="radio" name="storytelling" value="5">
+                                                <span class="rating-label">5 - Excellent</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="comment-section">
+                                        <label for="storytelling-comments">Comments (optional)</label>
+                                        <textarea id="storytelling-comments" name="storytellingComments" rows="3" placeholder="Provide specific feedback about the team's storytelling ability..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Criterion 3: Systems-Oriented Action Plan -->
+                            <div class="criterion-group">
+                                <div class="criterion-header">
+                                    <h4>3. Demonstrates the ability to build a systems-oriented action plan</h4>
+                                </div>
+                                <div class="rating-section">
+                                    <div class="rating-scale">
+                                        <div class="rating-inputs">
+                                            <label class="rating-option" title="1 - Fair: Poor performance requiring significant improvement">
+                                                <input type="radio" name="actionPlan" value="1" required>
+                                                <span class="rating-label">1 - Fair</span>
+                                            </label>
+                                            <label class="rating-option" title="2 - Needs Improvement: Below average performance with noticeable gaps">
+                                                <input type="radio" name="actionPlan" value="2">
+                                                <span class="rating-label">2</span>
+                                            </label>
+                                            <label class="rating-option" title="3 - Satisfactory: Adequate performance that meets basic expectations">
+                                                <input type="radio" name="actionPlan" value="3">
+                                                <span class="rating-label">3</span>
+                                            </label>
+                                            <label class="rating-option" title="4 - Good: Above average performance that meets most expectations">
+                                                <input type="radio" name="actionPlan" value="4">
+                                                <span class="rating-label">4</span>
+                                            </label>
+                                            <label class="rating-option" title="5 - Excellent: Exceptional performance that exceeds expectations">
+                                                <input type="radio" name="actionPlan" value="5">
+                                                <span class="rating-label">5 - Excellent</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="comment-section">
+                                        <label for="actionplan-comments">Comments (optional)</label>
+                                        <textarea id="actionplan-comments" name="actionPlanComments" rows="3" placeholder="Provide specific feedback about the team's action plan..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Criterion 4: Overall Assessment -->
+                            <div class="criterion-group">
+                                <div class="criterion-header">
+                                    <h4>4. Overall Assessment</h4>
+                                </div>
+                                <div class="rating-section">
+                                    <div class="rating-scale">
+                                        <div class="rating-inputs">
+                                            <label class="rating-option" title="1 - Fair: Poor performance requiring significant improvement">
+                                                <input type="radio" name="overall" value="1" required>
+                                                <span class="rating-label">1 - Fair</span>
+                                            </label>
+                                            <label class="rating-option" title="2 - Needs Improvement: Below average performance with noticeable gaps">
+                                                <input type="radio" name="overall" value="2">
+                                                <span class="rating-label">2</span>
+                                            </label>
+                                            <label class="rating-option" title="3 - Satisfactory: Adequate performance that meets basic expectations">
+                                                <input type="radio" name="overall" value="3">
+                                                <span class="rating-label">3</span>
+                                            </label>
+                                            <label class="rating-option" title="4 - Good: Above average performance that meets most expectations">
+                                                <input type="radio" name="overall" value="4">
+                                                <span class="rating-label">4</span>
+                                            </label>
+                                            <label class="rating-option" title="5 - Excellent: Exceptional performance that exceeds expectations">
+                                                <input type="radio" name="overall" value="5">
+                                                <span class="rating-label">5 - Excellent</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="comment-section">
+                                        <label for="overall-comments">Comments (optional)</label>
+                                        <textarea id="overall-comments" name="overallComments" rows="3" placeholder="Provide overall feedback about the team's performance..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="rubric-transparency">
+                                <p class="rubric-note"><strong>Note:</strong> Students have also been given this criteria for their preparation.</p>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="submit-btn">Submit Assessment</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Group Assessment Handler
+        class GroupAssessment {
+            constructor() {
+                this.groupName = this.extractGroupFromURL();
+                this.groupData = null;
+                this.teams = [];
+                this.completedTeams = [];
+                this.judges = [];
+                
+                // Make instance globally accessible for button clicks
+                window.groupAssessmentInstance = this;
+                
+                this.init();
+            }
+
+            extractGroupFromURL() {
+                const pathParts = window.location.pathname.split('/');
+                return decodeURIComponent(pathParts[pathParts.length - 1]);
+            }
+
+            async init() {
+                document.getElementById('loading').style.display = 'block';
+                
+                try {
+                    await this.loadGroupData();
+                    await this.loadTeams();
+                    await this.loadCompletedAssessments();
+                    this.setupUI();
+                    this.bindEvents();
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('main-content').style.display = 'block';
+                } catch (error) {
+                    console.error('Failed to initialize:', error);
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('error-message').style.display = 'block';
+                }
+            }
+
+            async loadGroupData() {
+                // For now, we'll define judge data based on group name
+                const judgeData = {
+                    'Classroom-1350': {
+                        chair: 'Mazi (Master Chair)',
+                        judges: ['Hannah', 'George']
+                    },
+                    'Classroom-1360': {
+                        chair: 'Lara',
+                        judges: ['James', 'Michelle Baldwin']
+                    },
+                    'Classroom-1380': {
+                        chair: 'Valen',
+                        judges: ['Michelle Quintyn', 'Minali']
+                    },
+                    'Classroom-1390': {
+                        chair: 'Michelina',
+                        judges: ['Jin-Su', 'Melanie']
+                    }
+                };
+
+                this.groupData = judgeData[this.groupName];
+                if (this.groupData) {
+                    this.judges = [this.groupData.chair, ...this.groupData.judges];
+                }
+            }
+
+            async loadTeams() {
+                const response = await fetch(`/api/teams?group=${encodeURIComponent(this.groupName)}`);
+                const data = await response.json();
+                
+                // Teams are already filtered by group from the server
+                this.teams = data || [];
+            }
+
+            async loadCompletedAssessments() {
+                try {
+                    const response = await fetch(`/api/assessments/group/${encodeURIComponent(this.groupName)}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.allAssessments = data.assessments || [];
+                        this.completedTeams = data.assessments.map(a => a.teamName || a.name);
+                    }
+                } catch (error) {
+                    console.log('No completed assessments found');
+                    this.completedTeams = [];
+                    this.allAssessments = [];
+                }
+            }
+
+            getJudgeAssessments(judgeName) {
+                if (!judgeName || !this.allAssessments) return [];
+                return this.allAssessments.filter(a => 
+                    a.judgeName.toLowerCase() === judgeName.toLowerCase()
+                );
+            }
+
+            updateTeamDropdownForJudge(judgeName) {
+                const teamSelect = document.getElementById('team-select');
+                const judgeAssessments = this.getJudgeAssessments(judgeName);
+                // Get unique teams only (remove duplicates from multiple assessments of same team)
+                const assessedTeams = [...new Set(judgeAssessments.map(a => a.teamName || a.name))];
+                
+                // Clear existing options except the first "Choose a team..." option
+                while (teamSelect.children.length > 1) {
+                    teamSelect.removeChild(teamSelect.lastChild);
+                }
+
+                // Add teams with status indicators
+                this.teams.forEach(team => {
+                    const option = document.createElement('option');
+                    const teamName = team.name || team.teamName;
+                    option.value = teamName;
+                    option.dataset.members = Array.isArray(team.members) ? team.members.join(', ') : team.members;
+                    
+                    if (assessedTeams.includes(teamName)) {
+                        option.textContent = `${teamName} ✓ (Click to Edit)`;
+                        option.style.color = '#28a745';
+                        option.style.fontWeight = 'bold';
+                    } else {
+                        option.textContent = `${teamName} (Not Assessed)`;
+                        option.style.color = '#dc3545';
+                    }
+                    
+                    teamSelect.appendChild(option);
+                });
+
+                // Update progress indicator
+                this.updateProgressIndicator(judgeName, assessedTeams.length);
+            }
+
+            updateProgressIndicator(judgeName, assessedCount) {
+                const totalTeams = this.teams.length;
+                const percentage = Math.round((assessedCount / totalTeams) * 100);
+                
+                let progressHtml = `
+                    <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin: 15px 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: 600; color: #495057;">Progress for ${judgeName}:</span>
+                            <span style="font-weight: bold; color: ${percentage === 100 ? '#28a745' : '#fd7e14'};">${assessedCount} of ${totalTeams} teams (${percentage}%)</span>
+                        </div>
+                        <div style="background: #e9ecef; border-radius: 4px; height: 8px; overflow: hidden;">
+                            <div style="background: ${percentage === 100 ? '#28a745' : '#fd7e14'}; height: 100%; width: ${percentage}%; transition: width 0.3s ease;"></div>
+                        </div>
+                `;
+                
+                if (percentage === 100) {
+                    progressHtml += `
+                        <div style="color: #28a745; font-weight: 600; margin-top: 8px; text-align: center;">🎉 All teams assessed!</div>
+                        <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 12px; margin: 10px 0; font-size: 0.9rem;">
+                            <div style="color: #856404; margin-bottom: 8px;"><strong>📝 Ready to Submit?</strong></div>
+                            <div style="color: #856404; margin-bottom: 10px;">You can still edit any assessment above before marking complete. Once you click "Mark Complete", results will be sent to the admin.</div>
+                            <button id="mark-complete-btn" onclick="window.groupAssessmentInstance.markComplete('${judgeName}')" 
+                                style="background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%;">
+                                ✅ Mark My Assessments Complete
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    const remaining = totalTeams - assessedCount;
+                    progressHtml += `<div style="color: #6c757d; margin-top: 8px; text-align: center;">${remaining} team${remaining !== 1 ? 's' : ''} remaining</div>`;
+                }
+                
+                progressHtml += `</div>`;
+                
+                // Update or create progress indicator
+                let progressDiv = document.getElementById('judge-progress');
+                if (!progressDiv) {
+                    progressDiv = document.createElement('div');
+                    progressDiv.id = 'judge-progress';
+                    document.querySelector('.form-group').after(progressDiv);
+                }
+                progressDiv.innerHTML = progressHtml;
+            }
+
+            setupUI() {
+                // Set group header
+                document.getElementById('group-name').textContent = this.groupName;
+                
+                if (this.groupData) {
+                    const judgeInfo = `Chair: ${this.groupData.chair} • Judges: ${this.groupData.judges.join(', ')}`;
+                    document.getElementById('judge-names').textContent = judgeInfo;
+                }
+                
+                document.getElementById('team-count').textContent = `${this.teams.length} teams to assess`;
+
+                // Setup initial team dropdown (will be updated when judge name is entered)
+                const teamSelect = document.getElementById('team-select');
+                this.teams.forEach(team => {
+                    const option = document.createElement('option');
+                    const teamName = team.name || team.teamName;
+                    option.value = teamName;
+                    option.textContent = teamName;
+                    option.dataset.members = Array.isArray(team.members) ? team.members.join(', ') : team.members;
+                    teamSelect.appendChild(option);
+                });
+
+                // Setup edit team dropdown
+                const editTeamSelect = document.getElementById('edit-team-select');
+                editTeamSelect.innerHTML = '<option value="">Select team...</option>';
+                this.teams.forEach(team => {
+                    const option = document.createElement('option');
+                    option.value = team.name || team.teamName;
+                    option.textContent = team.name || team.teamName;
+                    editTeamSelect.appendChild(option);
+                });
+
+                // Show judge suggestions
+                if (this.judges.length > 0) {
+                    document.getElementById('suggested-judges').style.display = 'block';
+                    const judgeButtons = document.getElementById('judge-buttons');
+                    
+                    this.judges.forEach(judge => {
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.textContent = judge;
+                        button.className = 'judge-quick-select';
+                        button.style.cssText = 'margin: 2px; padding: 4px 8px; background: #c5b783; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;';
+                        button.onclick = () => {
+                            document.getElementById('judge-name').value = judge;
+                        };
+                        judgeButtons.appendChild(button);
+                    });
+                }
+
+                // Show completed teams
+                if (this.completedTeams.length > 0) {
+                    document.getElementById('completed-teams').style.display = 'block';
+                    const completedList = document.getElementById('completed-list');
+                    
+                    this.completedTeams.forEach(teamName => {
+                        const span = document.createElement('span');
+                        span.className = 'completed-team';
+                        span.textContent = teamName;
+                        completedList.appendChild(span);
+                    });
+
+                    // Show edit button if there are completed assessments
+                    document.getElementById('show-edit').style.display = 'block';
+                }
+            }
+
+            bindEvents() {
+                // Judge name input - update dropdown when judge name changes
+                const judgeNameInput = document.getElementById('judge-name');
+                judgeNameInput.addEventListener('input', (e) => {
+                    const judgeName = e.target.value.trim();
+                    if (judgeName.length > 2) {
+                        this.updateTeamDropdownForJudge(judgeName);
+                    }
+                });
+
+                // Judge quick-select buttons - also update dropdown
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('judge-quick-select')) {
+                        const judgeName = e.target.textContent;
+                        setTimeout(() => {
+                            this.updateTeamDropdownForJudge(judgeName);
+                        }, 100);
+                    }
+                });
+
+                // Team selection
+                document.getElementById('team-select').addEventListener('change', (e) => {
+                    const selectedOption = e.target.selectedOptions[0];
+                    const membersDiv = document.getElementById('team-members');
+                    
+                    if (selectedOption && selectedOption.dataset.members) {
+                        membersDiv.textContent = `Members: ${selectedOption.dataset.members}`;
+                        membersDiv.style.display = 'block';
+                    } else {
+                        membersDiv.style.display = 'none';
+                    }
+
+                    // If this is an already assessed team, auto-load the assessment
+                    const judgeName = document.getElementById('judge-name').value.trim();
+                    const teamName = e.target.value;
+                    if (judgeName && teamName && selectedOption.textContent.includes('✓ (Click to Edit)')) {
+                        this.autoLoadAssessment(judgeName, teamName);
+                    }
+                });
+
+                // Form submission
+                document.getElementById('assessment-form').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    await this.submitAssessment(e.target);
+                });
+
+                // Edit functionality
+                document.getElementById('show-edit').addEventListener('click', () => this.showEditSection());
+                document.getElementById('toggle-edit').addEventListener('click', () => this.hideEditSection());
+                document.getElementById('load-assessment').addEventListener('click', () => this.loadPreviousAssessment());
+            }
+
+            showEditSection() {
+                document.getElementById('edit-section').style.display = 'block';
+                document.getElementById('show-edit').style.display = 'none';
+            }
+
+            hideEditSection() {
+                document.getElementById('edit-section').style.display = 'none';
+                document.getElementById('show-edit').style.display = 'block';
+            }
+
+            async autoLoadAssessment(judgeName, teamName) {
+                try {
+                    const assessment = this.allAssessments.find(a => 
+                        a.judgeName.toLowerCase() === judgeName.toLowerCase() && 
+                        (a.teamName === teamName || a.name === teamName)
+                    );
+
+                    if (assessment) {
+                        // Load ratings
+                        Object.keys(assessment.ratings).forEach(criterion => {
+                            const radio = document.querySelector(`input[name="${criterion}"][value="${assessment.ratings[criterion]}"]`);
+                            if (radio) radio.checked = true;
+                        });
+
+                        // Load comments
+                        Object.keys(assessment.comments).forEach(criterion => {
+                            const textarea = document.querySelector(`textarea[name="${criterion}Comments"]`);
+                            if (textarea) textarea.value = assessment.comments[criterion] || '';
+                        });
+
+                        // Show notification
+                        this.showTempNotification('📝 Existing assessment loaded for editing', 'info');
+                    }
+                } catch (error) {
+                    console.error('Auto-load error:', error);
+                }
+            }
+
+            showTempNotification(message, type) {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed; top: 20px; right: 20px; z-index: 1000;
+                    padding: 12px 20px; border-radius: 8px; font-weight: 600;
+                    background: ${type === 'info' ? '#d1ecf1' : '#d4edda'};
+                    border: 1px solid ${type === 'info' ? '#bee5eb' : '#c3e6cb'};
+                    color: ${type === 'info' ? '#0c5460' : '#155724'};
+                    animation: slideIn 0.3s ease-out;
+                `;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.style.animation = 'slideOut 0.3s ease-in';
+                    setTimeout(() => document.body.removeChild(notification), 300);
+                }, 3000);
+            }
+
+            async markComplete(judgeName) {
+                const btn = document.getElementById('mark-complete-btn');
+                const originalText = btn.textContent;
+                
+                // Confirm action
+                const confirmed = confirm(
+                    `Mark all assessments complete for ${judgeName}?\n\n` +
+                    `This will:\n` +
+                    `• Send results to the admin\n` +
+                    `• Finalize your scores for this classroom\n` +
+                    `• You can still edit individual assessments later if needed\n\n` +
+                    `Continue?`
+                );
+                
+                if (!confirmed) return;
+                
+                btn.textContent = 'Marking Complete...';
+                btn.disabled = true;
+                
+                try {
+                    const response = await fetch(`/api/assessments/complete`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            judgeName: judgeName,
+                            groupName: this.groupName
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        btn.style.background = '#6c757d';
+                        btn.textContent = '✅ Marked Complete - Results Sent!';
+                        btn.disabled = true;
+                        
+                        this.showTempNotification('🎉 Assessments marked complete! Results sent to admin.', 'success');
+                        
+                        // Update the messaging
+                        btn.parentElement.querySelector('div').innerHTML = 
+                            `<strong>✅ Completed!</strong> Your assessments have been submitted. Thank you for your evaluation!`;
+                    } else {
+                        throw new Error('Failed to mark complete');
+                    }
+                } catch (error) {
+                    console.error('Mark complete error:', error);
+                    alert('Failed to mark complete. Please try again or contact support.');
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }
+            }
+
+            async loadPreviousAssessment() {
+                const judgeName = document.getElementById('edit-judge-name').value.trim();
+                const teamName = document.getElementById('edit-team-select').value;
+                const statusDiv = document.getElementById('edit-status');
+
+                if (!judgeName || !teamName) {
+                    this.showEditStatus('Please enter both judge name and select a team.', 'error');
+                    return;
+                }
+
+                try {
+                    this.showEditStatus('Searching for assessment...', 'info');
+
+                    // Find the assessment
+                    const response = await fetch(`/api/assessments/group/${encodeURIComponent(this.groupName)}`);
+                    if (!response.ok) {
+                        throw new Error('Failed to load assessments');
+                    }
+
+                    const data = await response.json();
+                    const assessment = data.assessments.find(a => 
+                        a.judgeName.toLowerCase() === judgeName.toLowerCase() && 
+                        a.teamName === teamName
+                    );
+
+                    if (!assessment) {
+                        this.showEditStatus(`No assessment found for judge "${judgeName}" and team "${teamName}".`, 'error');
+                        return;
+                    }
+
+                    // Load the assessment into the form
+                    document.getElementById('judge-name').value = assessment.judgeName;
+                    document.getElementById('team-select').value = assessment.teamName;
+
+                    // Trigger team selection to show members
+                    document.getElementById('team-select').dispatchEvent(new Event('change'));
+
+                    // Load ratings
+                    Object.keys(assessment.ratings).forEach(criterion => {
+                        const radio = document.querySelector(`input[name="${criterion}"][value="${assessment.ratings[criterion]}"]`);
+                        if (radio) radio.checked = true;
+                    });
+
+                    // Load comments
+                    Object.keys(assessment.comments).forEach(criterion => {
+                        const textarea = document.querySelector(`textarea[name="${criterion}Comments"]`);
+                        if (textarea) textarea.value = assessment.comments[criterion] || '';
+                    });
+
+                    this.showEditStatus(`✅ Assessment loaded successfully! You can now modify and resubmit.`, 'success');
+                    
+                    // Hide edit section and scroll to form
+                    this.hideEditSection();
+                    document.getElementById('assessment-form').scrollIntoView({ behavior: 'smooth' });
+
+                } catch (error) {
+                    console.error('Load assessment error:', error);
+                    this.showEditStatus(`Failed to load assessment: ${error.message}`, 'error');
+                }
+            }
+
+            showEditStatus(message, type) {
+                const statusDiv = document.getElementById('edit-status');
+                statusDiv.style.display = 'block';
+                statusDiv.textContent = message;
+
+                if (type === 'success') {
+                    statusDiv.style.background = '#d4edda';
+                    statusDiv.style.border = '1px solid #c3e6cb';
+                    statusDiv.style.color = '#155724';
+                } else if (type === 'error') {
+                    statusDiv.style.background = '#f8d7da';
+                    statusDiv.style.border = '1px solid #f5c6cb';
+                    statusDiv.style.color = '#721c24';
+                } else {
+                    statusDiv.style.background = '#d1ecf1';
+                    statusDiv.style.border = '1px solid #bee5eb';
+                    statusDiv.style.color = '#0c5460';
+                }
+
+                // Auto-hide success messages
+                if (type === 'success') {
+                    setTimeout(() => {
+                        statusDiv.style.display = 'none';
+                    }, 5000);
+                }
+            }
+
+            async submitAssessment(form) {
+                const formData = new FormData(form);
+                const submitBtn = form.querySelector('.submit-btn');
+                
+                submitBtn.textContent = 'Submitting...';
+                submitBtn.disabled = true;
+
+                try {
+                    const assessmentData = {
+                        judgeName: formData.get('judgeName'),
+                        teamName: formData.get('teamName'),
+                        ratings: {
+                            complexity: parseInt(formData.get('complexity')),
+                            storytelling: parseInt(formData.get('storytelling')),
+                            actionPlan: parseInt(formData.get('actionPlan')),
+                            overall: parseInt(formData.get('overall'))
+                        },
+                        comments: {
+                            complexity: formData.get('complexityComments') || '',
+                            storytelling: formData.get('storytellingComments') || '',
+                            actionPlan: formData.get('actionPlanComments') || '',
+                            overall: formData.get('overallComments') || ''
+                        }
+                    };
+
+                    const response = await fetch('/api/assessments', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(assessmentData)
+                    });
+
+                    if (response.ok) {
+                        const total = Object.values(assessmentData.ratings).reduce((sum, rating) => sum + rating, 0);
+                        const percentage = Math.round((total / 20) * 100);
+                        
+                        alert(`Assessment submitted successfully!\\n\\nTeam: ${assessmentData.teamName}\\nTotal Score: ${total}/20 (${percentage}%)`);
+                        
+                        // Refresh assessments and update progress
+                        await this.loadCompletedAssessments();
+                        this.updateTeamDropdownForJudge(assessmentData.judgeName);
+                        
+                        // Reset form but keep judge name
+                        const judgeName = assessmentData.judgeName;
+                        form.reset();
+                        document.getElementById('judge-name').value = judgeName;
+                    } else {
+                        throw new Error('Failed to submit assessment');
+                    }
+                } catch (error) {
+                    console.error('Submission error:', error);
+                    alert('Failed to submit assessment. Please try again.');
+                } finally {
+                    submitBtn.textContent = 'Submit Assessment';
+                    submitBtn.disabled = false;
+                }
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new GroupAssessment();
+        });
+    </script>
+</body>
+</html>
