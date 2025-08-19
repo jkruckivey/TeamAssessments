@@ -10,7 +10,7 @@ export const options = {
   stages: [
     { duration: '30s', target: parseInt(__ENV.VUS) || 3 }, // Gentle ramp up
     { duration: __ENV.DURATION || '2m', target: parseInt(__ENV.VUS) || 3 }, // Sustained load
-    { duration: '1m', target: parseInt(__ENV.VUS) * 1.5 || 5 }, // Mild spike test
+    { duration: '1m', target: Math.floor((parseInt(__ENV.VUS) || 3) * 1.5) }, // Mild spike test
     { duration: '30s', target: 0 }, // Ramp down
   ],
   thresholds: {
