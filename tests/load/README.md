@@ -43,13 +43,13 @@ The load tests run automatically:
 ## Success Criteria
 
 ### Basic Load Test
-- 95% of requests complete under 2 seconds
-- Error rate below 10%
+- 95% of requests complete under 3 seconds
+- Error rate below 25% (realistic for free hosting)
 - All static assets load successfully
 
 ### Stress Test
 - 95% of requests complete under 3 seconds
-- Error rate below 15% (more lenient for stress conditions)
+- Error rate below 25% (realistic for free hosting)
 - Server handles concurrent requests without crashing
 
 ## Interpreting Results

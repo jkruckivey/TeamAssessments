@@ -15,8 +15,8 @@ export const options = {
   ],
   thresholds: {
     http_req_duration: ['p(95)<3000'], // 95% of requests under 3s
-    http_req_failed: ['rate<0.5'], // Error rate under 50% (very lenient for free hosting)
-    api_errors: ['rate<0.5'],
+    http_req_failed: ['rate<0.25'], // Error rate under 25% (realistic for free hosting)
+    api_errors: ['rate<0.25'],
   },
 };
 
