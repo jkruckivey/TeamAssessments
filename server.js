@@ -539,24 +539,39 @@ function validateTeamData(data) {
         
         seenTeams.add(cleanName.toLowerCase());
         
-        // Extract team member information
-        const members = [];
-        for (let i = 1; i <= 6; i++) { // Support up to 6 team members
-            const memberName = row[`member${i}_name`] || row[`Member${i} Name`] || row[`member_${i}_name`];
-            const memberEmail = row[`member${i}_email`] || row[`Member${i} Email`] || row[`member_${i}_email`];
-            
-            if (memberName && memberName.trim()) {
-                members.push({
-                    name: memberName.trim(),
-                    email: memberEmail ? memberEmail.trim() : ''
-                });
+        // Handle members in different formats
+        let members = [];
+        
+        // Format 1: Single 'members' column with comma-separated names
+        if (row['members'] && row['members'].trim()) {
+            const memberNames = row['members'].split(',').map(name => name.trim()).filter(name => name);
+            members = memberNames.map(name => ({
+                name: name,
+                email: '' // No email in this format
+            }));
+        } else {
+            // Format 2: Individual member columns (member1_name, member2_name, etc.)
+            for (let i = 1; i <= 6; i++) {
+                const memberName = row[`member${i}_name`] || row[`Member${i} Name`] || row[`member_${i}_name`];
+                const memberEmail = row[`member${i}_email`] || row[`Member${i} Email`] || row[`member_${i}_email`];
+                
+                if (memberName && memberName.trim()) {
+                    members.push({
+                        name: memberName.trim(),
+                        email: memberEmail ? memberEmail.trim() : ''
+                    });
+                }
             }
         }
         
         validTeams.push({
-            id: uuidv4(),
             name: cleanName,
             members: members,
+            group: row['group'] || 'default', // Include group from CSV
+            chair: row['chair'] || null,
+            judge1: row['judge1'] || null,
+            judge2: row['judge2'] || null,
+            id: uuidv4(),
             createdAt: new Date().toISOString(),
             source: 'csv_upload'
         });
@@ -624,6 +639,29 @@ function extractJudgeData(csvRows) {
     }
     
     return judgeGroups;
+}
+
+// Extract judge information from team data
+function updateJudgesFromTeams(teams, group) {
+    if (!teams || teams.length === 0) return;
+    
+    // Get judge info from first team (assumes all teams in same group have same judges)
+    const firstTeam = teams[0];
+    if (!firstTeam.chair && !firstTeam.judge1 && !firstTeam.judge2) return;
+    
+    const judgeInfo = {
+        group: group,
+        chair: firstTeam.chair || null,
+        judges: [firstTeam.chair, firstTeam.judge1, firstTeam.judge2].filter(Boolean),
+        createdAt: new Date().toISOString(),
+        source: 'team_csv_upload'
+    };
+    
+    // Remove existing judge entry for this group and add new one
+    judges = judges.filter(j => normalizeGroup(j.group) !== group);
+    judges.push(judgeInfo);
+    
+    console.log(`Updated judges for group ${group}:`, judgeInfo.judges.join(', '));
 }
 
 // Routes
@@ -1068,6 +1106,12 @@ app.post('/api/teams/upload', upload.single('csvFile'), async (req, res) => {
             }
         });
         teams.push(...newTeams);
+        
+        // Extract and update judge information from teams
+        if (newTeams.length > 0) {
+            updateJudgesFromTeams(newTeams, group);
+        }
+        
         await saveData();
         
         // Send PIN emails to team members (don't wait for completion)

@@ -1,8 +1,8 @@
-teamName,group,members,pin
-Barley,Classroom-1350,"Astritis Mac, Choi Natasha, Egbedi Maro",
-Borage,Classroom-1350,"Aamir Awaad, Adeniran Princess, Bardales Bruno",
-Buckwheat,Classroom-1350,"Adesanya Olayinka, Baudisch-McCabe Rio, Bhakri Melissa",
-Butternut,Classroom-1350,"Ahmed Ayat, Bhosha Racheal, Dimitrov Nik",
-Camelina,Classroom-1350,"Ali Arham, Chetty Kirtika, Dixit Ashutosh",
-Canola,Classroom-1350,"Arantes Ricardo, Deboo Gulshan, Dsouza Frenil",
-Cedar,Classroom-1350,"Birkinshaw Ross, Desai Rutuja, Favell Graham"
+teamName,group,members,pin,chair,judge1,judge2
+Barley,Classroom-1350,"Astritis Mac, Choi Natasha, Egbedi Maro",,Mazi (Master Chair),Hannah,George
+Borage,Classroom-1350,"Aamir Awaad, Adeniran Princess, Bardales Bruno",,Mazi (Master Chair),Hannah,George
+Buckwheat,Classroom-1350,"Adesanya Olayinka, Baudisch-McCabe Rio, Bhakri Melissa",,Mazi (Master Chair),Hannah,George
+Butternut,Classroom-1350,"Ahmed Ayat, Bhosha Racheal, Dimitrov Nik",,Mazi (Master Chair),Hannah,George
+Camelina,Classroom-1350,"Ali Arham, Chetty Kirtika, Dixit Ashutosh",,Mazi (Master Chair),Hannah,George
+Canola,Classroom-1350,"Arantes Ricardo, Deboo Gulshan, Dsouza Frenil",,Mazi (Master Chair),Hannah,George
+Cedar,Classroom-1350,"Birkinshaw Ross, Desai Rutuja, Favell Graham",,Mazi (Master Chair),Hannah,George
