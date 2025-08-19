@@ -8,8 +8,13 @@ const multer = require('multer');
 const csv = require('csv-parser');
 const { Readable } = require('stream');
 require('dotenv').config();
+const http = require('http');
+const { Server } = require("socket.io");
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 // Helper to normalize group slug
@@ -655,13 +660,24 @@ app.post('/api/groups', (req, res) => {
 app.delete('/api/groups/:groupName', (req, res) => {
     try {
         const groupName = req.params.groupName.trim();
+        const cascade = req.query.cascade === 'true';
         
         if (!groupName) {
             return res.status(400).json({ error: 'Group name is required' });
         }
         
+        // Build comprehensive group list (same as GET /api/groups)
+        const allGroups = new Set(groups);
+        teams.forEach(team => {
+            allGroups.add(normalizeGroup(team.group));
+        });
+        assessments.forEach(assessment => {
+            allGroups.add(normalizeGroup(assessment.group));
+        });
+        const existingGroups = Array.from(allGroups);
+        
         // Check if group exists
-        if (!groups.includes(groupName)) {
+        if (!existingGroups.includes(groupName)) {
             return res.status(404).json({ error: 'Group not found' });
         }
         
@@ -669,28 +685,53 @@ app.delete('/api/groups/:groupName', (req, res) => {
         const groupHasTeams = teams.some(team => normalizeGroup(team.group) === normalizeGroup(groupName));
         const groupHasAssessments = assessments.some(assessment => normalizeGroup(assessment.group) === normalizeGroup(groupName));
         
-        if (groupHasTeams) {
-            return res.status(400).json({ 
-                error: 'Cannot delete group with existing teams. Remove teams first.' 
-            });
+        // Safe delete: fail if group has data
+        if (!cascade) {
+            if (groupHasTeams) {
+                return res.status(400).json({ 
+                    error: 'Cannot delete group with existing teams. Remove teams first.' 
+                });
+            }
+            
+            if (groupHasAssessments) {
+                return res.status(400).json({ 
+                    error: 'Cannot delete group with existing assessments. Remove assessments first.' 
+                });
+            }
         }
         
-        if (groupHasAssessments) {
-            return res.status(400).json({ 
-                error: 'Cannot delete group with existing assessments. Remove assessments first.' 
-            });
+        // Cascade delete: remove all related data
+        if (cascade) {
+            // Count what will be deleted for logging
+            const teamsToDelete = teams.filter(team => normalizeGroup(team.group) === normalizeGroup(groupName));
+            const assessmentsToDelete = assessments.filter(assessment => normalizeGroup(assessment.group) === normalizeGroup(groupName));
+            
+            // Remove teams
+            teams = teams.filter(team => normalizeGroup(team.group) !== normalizeGroup(groupName));
+            
+            // Remove assessments
+            assessments = assessments.filter(assessment => normalizeGroup(assessment.group) !== normalizeGroup(groupName));
+            
+            console.log(`Cascade delete for group "${groupName}": removed ${teamsToDelete.length} teams, ${assessmentsToDelete.length} assessments`);
         }
         
         // Remove group from the list
         groups = groups.filter(group => group !== groupName);
         
-        // Save the updated groups list
+        // Save the updated data
         saveData();
         
-        console.log(`Deleted group: ${groupName}`);
+        const deleteType = cascade ? 'cascade' : 'safe';
+        console.log(`Deleted group (${deleteType}): ${groupName}`);
+        
+        const message = cascade 
+            ? `Group '${groupName}' and all its data deleted successfully`
+            : `Group '${groupName}' deleted successfully`;
+            
         res.json({ 
             success: true, 
-            message: `Group '${groupName}' deleted successfully` 
+            message: message,
+            cascade: cascade
         });
         
     } catch (error) {
@@ -838,6 +879,7 @@ app.post('/api/assessments', async (req, res) => {
 
     // Note: Email notifications are now only sent when judge marks complete
     await saveData();
+    io.emit('new_assessment');
 
     res.json({ 
       success: true, 
@@ -1369,7 +1411,7 @@ app.use('*', (req, res) => {
 
 // Initialize and start server
 initializeData().then(() => {
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
         console.log(`Team Assessment Server running on port ${PORT}`);
         console.log(`Assessment Form: http://localhost:${PORT}`);
         console.log(`Admin Dashboard: http://localhost:${PORT}/admin`);
