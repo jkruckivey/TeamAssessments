@@ -565,6 +565,67 @@ function validateTeamData(data) {
     return { errors, validTeams };
 }
 
+// Parse judge data from CSV (expected format: rows 4-7 with classroom/judge info)
+async function parseJudgeCSV(buffer) {
+    return new Promise((resolve, reject) => {
+        const results = [];
+        const stream = Readable.from(buffer.toString());
+        
+        stream
+            .pipe(csv({ headers: false }))
+            .on('data', (data) => results.push(Object.values(data)))
+            .on('end', () => {
+                try {
+                    const judgeData = extractJudgeData(results);
+                    resolve(judgeData);
+                } catch (error) {
+                    reject(error);
+                }
+            })
+            .on('error', (error) => reject(error));
+    });
+}
+
+function extractJudgeData(csvRows) {
+    if (csvRows.length < 4) {
+        throw new Error('CSV file must have at least 4 rows with judge information');
+    }
+    
+    // Row 3 (index 3): Classroom names
+    // Row 4 (index 4): Chair names  
+    // Row 5 (index 5): Judge 1 names
+    // Row 6 (index 6): Judge 2 names
+    const classroomRow = csvRows[3] || [];
+    const chairRow = csvRows[4] || [];
+    const judge1Row = csvRows[5] || [];
+    const judge2Row = csvRows[6] || [];
+    
+    const judgeGroups = [];
+    
+    // Process each classroom (every 2 columns: name, empty, name, empty, etc.)
+    for (let i = 0; i < classroomRow.length; i += 2) {
+        const classroom = classroomRow[i];
+        if (!classroom || !classroom.trim()) continue;
+        
+        const chair = chairRow[i] && chairRow[i].trim();
+        const judge1 = judge1Row[i] && judge1Row[i].trim();
+        const judge2 = judge2Row[i] && judge2Row[i].trim();
+        
+        if (chair || judge1 || judge2) {
+            const judges = [chair, judge1, judge2].filter(Boolean);
+            judgeGroups.push({
+                group: classroom.trim(),
+                chair: chair || null,
+                judges: judges,
+                createdAt: new Date().toISOString(),
+                source: 'csv_upload'
+            });
+        }
+    }
+    
+    return judgeGroups;
+}
+
 // Routes
 
 // Serve main assessment form
@@ -1041,6 +1102,75 @@ app.post('/api/teams/upload', upload.single('csvFile'), async (req, res) => {
             error: 'Failed to process CSV file',
             details: error.message
         });
+    }
+});
+
+// Upload judges from CSV
+app.post('/api/judges/upload', upload.single('csvFile'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No CSV file uploaded' });
+        }
+
+        const judgeData = await parseJudgeCSV(req.file.buffer);
+        
+        if (judgeData.length === 0) {
+            return res.status(400).json({
+                error: 'No valid judge data found in CSV',
+                expectedFormat: 'CSV should have classroom names in row 4, chairs in row 5, and judges in rows 6-7'
+            });
+        }
+
+        // Clear existing judges and add new ones
+        judges.length = 0;
+        judges.push(...judgeData);
+        
+        await saveData();
+        
+        console.log(`Judge CSV Import: ${judgeData.length} judge groups imported`);
+        res.json({
+            message: `Successfully imported ${judgeData.length} judge group(s)`,
+            judgeGroups: judgeData.length,
+            groups: judgeData.map(j => j.group)
+        });
+        
+    } catch (error) {
+        console.error('Error processing judge CSV upload:', error);
+        res.status(500).json({
+            error: 'Failed to process judge CSV file',
+            details: error.message
+        });
+    }
+});
+
+// Get judges for a specific group
+app.get('/api/judges', (req, res) => {
+    try {
+        const group = req.query.group ? normalizeGroup(req.query.group) : null;
+        
+        if (group) {
+            // Find judges for specific group
+            const groupJudges = judges.find(j => normalizeGroup(j.group) === group);
+            if (groupJudges) {
+                res.json({
+                    group: group,
+                    chair: groupJudges.chair,
+                    judges: groupJudges.judges
+                });
+            } else {
+                res.json({
+                    group: group,
+                    chair: null,
+                    judges: []
+                });
+            }
+        } else {
+            // Return all judge groups
+            res.json(judges);
+        }
+    } catch (error) {
+        console.error('Error fetching judges:', error);
+        res.status(500).json({ error: 'Failed to fetch judge data' });
     }
 });
 

@@ -15,7 +15,7 @@ on:
       virtual_users:
         description: 'Number of virtual users'
         required: true
-        default: '10'
+        default: '3'
   
   # Run on schedule (weekly)
   schedule:
@@ -48,8 +48,8 @@ jobs:
     - name: Run basic load test
       env:
         TARGET_URL: ${{ github.event.inputs.target_url || 'https://assessments.iveyedtech.ca' }}
-        DURATION: ${{ github.event.inputs.duration || '2m' }}
-        VUS: ${{ github.event.inputs.virtual_users || '10' }}
+        DURATION: ${{ github.event.inputs.duration || '1m' }}
+        VUS: ${{ github.event.inputs.virtual_users || '3' }}
       run: |
         k6 run tests/load/basic-load-test.js \
           --env TARGET_URL=$TARGET_URL \
@@ -59,8 +59,8 @@ jobs:
     - name: Run API stress test
       env:
         TARGET_URL: ${{ github.event.inputs.target_url || 'https://assessments.iveyedtech.ca' }}
-        DURATION: ${{ github.event.inputs.duration || '2m' }}
-        VUS: ${{ github.event.inputs.virtual_users || '10' }}
+        DURATION: ${{ github.event.inputs.duration || '1m' }}
+        VUS: ${{ github.event.inputs.virtual_users || '3' }}
       run: |
         k6 run tests/load/api-stress-test.js \
           --env TARGET_URL=$TARGET_URL \

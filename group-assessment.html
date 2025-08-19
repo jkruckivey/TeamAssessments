@@ -25,11 +25,11 @@
             font-size: 0.95rem;
         }
 
-        .team-dropdown {
+        .team-dropdown, .judge-dropdown {
             position: relative;
         }
 
-        .team-dropdown select {
+        .team-dropdown select, .judge-dropdown select {
             width: 100%;
             padding: 12px;
             border: 2px solid #ddd;
@@ -39,7 +39,7 @@
             cursor: pointer;
         }
 
-        .team-dropdown select:focus {
+        .team-dropdown select:focus, .judge-dropdown select:focus {
             border-color: #c5b783;
             outline: none;
         }
@@ -162,7 +162,9 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; margin-bottom: 15px;">
                         <div>
                             <label style="font-weight: 600; color: #856404; display: block; margin-bottom: 5px;">Judge Name:</label>
-                            <input type="text" id="edit-judge-name" placeholder="Enter your name" style="width: 100%; padding: 8px; border: 1px solid #ffeaa7; border-radius: 4px;">
+                            <select id="edit-judge-name" style="width: 100%; padding: 8px; border: 1px solid #ffeaa7; border-radius: 4px;">
+                                <option value="">Choose your name...</option>
+                            </select>
                         </div>
                         <div>
                             <label style="font-weight: 600; color: #856404; display: block; margin-bottom: 5px;">Team Name:</label>
@@ -192,10 +194,10 @@
                     <form id="assessment-form" class="assessment-form">
                         <div class="form-group">
                             <label for="judge-name">Your Name *</label>
-                            <input type="text" id="judge-name" name="judgeName" required>
-                            <div class="judge-info" id="suggested-judges" style="display: none;">
-                                <strong>Assigned judges for this classroom:</strong>
-                                <div id="judge-buttons"></div>
+                            <div class="judge-dropdown">
+                                <select id="judge-name" name="judgeName" required>
+                                    <option value="">Choose your name...</option>
+                                </select>
                             </div>
                         </div>
 
@@ -415,29 +417,33 @@
             }
 
             async loadGroupData() {
-                // For now, we'll define judge data based on group name
-                const judgeData = {
-                    'Classroom-1350': {
-                        chair: 'Mazi (Master Chair)',
-                        judges: ['Hannah', 'George']
-                    },
-                    'Classroom-1360': {
-                        chair: 'Lara',
-                        judges: ['James', 'Michelle Baldwin']
-                    },
-                    'Classroom-1380': {
-                        chair: 'Valen',
-                        judges: ['Michelle Quintyn', 'Minali']
-                    },
-                    'Classroom-1390': {
-                        chair: 'Michelina',
-                        judges: ['Jin-Su', 'Melanie']
+                try {
+                    // Load judge data from API
+                    const response = await fetch(`/api/judges?group=${encodeURIComponent(this.groupName)}`);
+                    if (response.ok) {
+                        const judgeData = await response.json();
+                        this.groupData = {
+                            chair: judgeData.chair,
+                            judges: judgeData.judges || []
+                        };
+                        
+                        // Combine chair and judges into a single list
+                        this.judges = [];
+                        if (judgeData.chair) {
+                            this.judges.push(judgeData.chair);
+                        }
+                        this.judges.push(...(judgeData.judges || []));
+                    } else {
+                        console.warn('No judge data found for group:', this.groupName);
+                        // Fallback to empty data
+                        this.groupData = { chair: null, judges: [] };
+                        this.judges = [];
                     }
-                };
-
-                this.groupData = judgeData[this.groupName];
-                if (this.groupData) {
-                    this.judges = [this.groupData.chair, ...this.groupData.judges];
+                } catch (error) {
+                    console.error('Error loading judge data:', error);
+                    // Fallback to empty data
+                    this.groupData = { chair: null, judges: [] };
+                    this.judges = [];
                 }
             }
 
@@ -505,6 +511,30 @@
                 this.updateProgressIndicator(judgeName, assessedTeams.length);
             }
 
+            resetTeamDropdown() {
+                const teamSelect = document.getElementById('team-select');
+                // Clear existing options except the first "Choose a team..." option
+                while (teamSelect.children.length > 1) {
+                    teamSelect.removeChild(teamSelect.lastChild);
+                }
+                
+                // Add basic team options without status indicators
+                this.teams.forEach(team => {
+                    const option = document.createElement('option');
+                    const teamName = team.name || team.teamName;
+                    option.value = teamName;
+                    option.textContent = teamName;
+                    option.dataset.members = Array.isArray(team.members) ? team.members.join(', ') : team.members;
+                    teamSelect.appendChild(option);
+                });
+                
+                // Remove progress indicator
+                const progressDiv = document.getElementById('judge-progress');
+                if (progressDiv) {
+                    progressDiv.innerHTML = '';
+                }
+            }
+
             updateProgressIndicator(judgeName, assessedCount) {
                 const totalTeams = this.teams.length;
                 const percentage = Math.round((assessedCount / totalTeams) * 100);
@@ -553,9 +583,21 @@
                 // Set group header
                 document.getElementById('group-name').textContent = this.groupName;
                 
-                if (this.groupData) {
-                    const judgeInfo = `Chair: ${this.groupData.chair} • Judges: ${this.groupData.judges.join(', ')}`;
+                // Display judge information if available
+                if (this.groupData && (this.groupData.chair || this.groupData.judges.length > 0)) {
+                    let judgeInfo = '';
+                    if (this.groupData.chair) {
+                        judgeInfo += `Chair: ${this.groupData.chair}`;
+                    }
+                    if (this.groupData.judges.length > 0) {
+                        const judgesList = this.groupData.judges.filter(j => j !== this.groupData.chair); // Avoid duplicating chair
+                        if (judgesList.length > 0) {
+                            judgeInfo += (judgeInfo ? ' • ' : '') + `Judges: ${judgesList.join(', ')}`;
+                        }
+                    }
                     document.getElementById('judge-names').textContent = judgeInfo;
+                } else {
+                    document.getElementById('judge-names').textContent = 'No judge assignments loaded. Please upload judge CSV data.';
                 }
                 
                 document.getElementById('team-count').textContent = `${this.teams.length} teams to assess`;
@@ -581,21 +623,25 @@
                     editTeamSelect.appendChild(option);
                 });
 
-                // Show judge suggestions
+                // Setup edit judge dropdown
+                const editJudgeSelect = document.getElementById('edit-judge-name');
                 if (this.judges.length > 0) {
-                    document.getElementById('suggested-judges').style.display = 'block';
-                    const judgeButtons = document.getElementById('judge-buttons');
-                    
                     this.judges.forEach(judge => {
-                        const button = document.createElement('button');
-                        button.type = 'button';
-                        button.textContent = judge;
-                        button.className = 'judge-quick-select';
-                        button.style.cssText = 'margin: 2px; padding: 4px 8px; background: #c5b783; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;';
-                        button.onclick = () => {
-                            document.getElementById('judge-name').value = judge;
-                        };
-                        judgeButtons.appendChild(button);
+                        const option = document.createElement('option');
+                        option.value = judge;
+                        option.textContent = judge;
+                        editJudgeSelect.appendChild(option);
+                    });
+                }
+
+                // Setup judge dropdown
+                const judgeSelect = document.getElementById('judge-name');
+                if (this.judges.length > 0) {
+                    this.judges.forEach(judge => {
+                        const option = document.createElement('option');
+                        option.value = judge;
+                        option.textContent = judge;
+                        judgeSelect.appendChild(option);
                     });
                 }
 
@@ -617,22 +663,15 @@
             }
 
             bindEvents() {
-                // Judge name input - update dropdown when judge name changes
-                const judgeNameInput = document.getElementById('judge-name');
-                judgeNameInput.addEventListener('input', (e) => {
-                    const judgeName = e.target.value.trim();
-                    if (judgeName.length > 2) {
+                // Judge name dropdown - update team dropdown when judge is selected
+                const judgeNameSelect = document.getElementById('judge-name');
+                judgeNameSelect.addEventListener('change', (e) => {
+                    const judgeName = e.target.value;
+                    if (judgeName) {
                         this.updateTeamDropdownForJudge(judgeName);
-                    }
-                });
-
-                // Judge quick-select buttons - also update dropdown
-                document.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('judge-quick-select')) {
-                        const judgeName = e.target.textContent;
-                        setTimeout(() => {
-                            this.updateTeamDropdownForJudge(judgeName);
-                        }, 100);
+                    } else {
+                        // Reset team dropdown when no judge is selected
+                        this.resetTeamDropdown();
                     }
                 });
 
