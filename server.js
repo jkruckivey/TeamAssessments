@@ -740,6 +740,57 @@ app.delete('/api/groups/:groupName', (req, res) => {
     }
 });
 
+// Clear all assessments for a group (reset group)
+app.post('/api/groups/:groupName/clear', (req, res) => {
+    try {
+        const groupName = req.params.groupName.trim();
+        
+        if (!groupName) {
+            return res.status(400).json({ error: 'Group name is required' });
+        }
+        
+        // Build comprehensive group list to verify group exists
+        const allGroups = new Set(groups);
+        teams.forEach(team => {
+            allGroups.add(normalizeGroup(team.group));
+        });
+        assessments.forEach(assessment => {
+            allGroups.add(normalizeGroup(assessment.group));
+        });
+        const existingGroups = Array.from(allGroups);
+        
+        // Check if group exists
+        if (!existingGroups.includes(groupName)) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+        
+        // Find assessments to clear
+        const assessmentsToRemove = assessments.filter(assessment => 
+            normalizeGroup(assessment.group) === normalizeGroup(groupName)
+        );
+        
+        // Remove all assessments for this group
+        assessments = assessments.filter(assessment => 
+            normalizeGroup(assessment.group) !== normalizeGroup(groupName)
+        );
+        
+        // Save the updated data
+        saveData();
+        
+        console.log(`Cleared ${assessmentsToRemove.length} assessments for group "${groupName}"`);
+        
+        res.json({ 
+            success: true, 
+            message: `Cleared ${assessmentsToRemove.length} assessments. Group structure and settings preserved.`,
+            assessmentsCleared: assessmentsToRemove.length
+        });
+        
+    } catch (error) {
+        console.error('Error clearing group results:', error);
+        res.status(500).json({ error: 'Failed to clear group results' });
+    }
+});
+
 // Update group email notification
 app.put('/api/groups/:groupName/email', (req, res) => {
     try {

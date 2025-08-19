@@ -1,0 +1,76 @@
+name: Load Testing
+
+on:
+  # Run on manual trigger
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target URL to test'
+        required: true
+        default: 'https://assessments.iveyedtech.ca'
+      duration:
+        description: 'Test duration (e.g., 30s, 2m, 5m)'
+        required: true
+        default: '2m'
+      virtual_users:
+        description: 'Number of virtual users'
+        required: true
+        default: '10'
+  
+  # Run on schedule (weekly)
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 9 AM UTC
+  
+  # Run on push to main (optional)
+  push:
+    branches: [ main ]
+    paths:
+      - 'server.js'
+      - 'package.json'
+      - '.github/workflows/load-test.yml'
+
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install k6
+      run: |
+        sudo gpg -k
+        sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+        echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+        sudo apt-get update
+        sudo apt-get install k6
+    
+    - name: Run basic load test
+      env:
+        TARGET_URL: ${{ github.event.inputs.target_url || 'https://assessments.iveyedtech.ca' }}
+        DURATION: ${{ github.event.inputs.duration || '2m' }}
+        VUS: ${{ github.event.inputs.virtual_users || '10' }}
+      run: |
+        k6 run tests/load/basic-load-test.js \
+          --env TARGET_URL=$TARGET_URL \
+          --env DURATION=$DURATION \
+          --env VUS=$VUS
+    
+    - name: Run API stress test
+      env:
+        TARGET_URL: ${{ github.event.inputs.target_url || 'https://assessments.iveyedtech.ca' }}
+        DURATION: ${{ github.event.inputs.duration || '2m' }}
+        VUS: ${{ github.event.inputs.virtual_users || '10' }}
+      run: |
+        k6 run tests/load/api-stress-test.js \
+          --env TARGET_URL=$TARGET_URL \
+          --env DURATION=$DURATION \
+          --env VUS=$VUS
+    
+    - name: Generate load test report
+      run: |
+        echo "## Load Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "- Target: ${{ github.event.inputs.target_url || 'https://assessments.iveyedtech.ca' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Duration: ${{ github.event.inputs.duration || '2m' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Virtual Users: ${{ github.event.inputs.virtual_users || '10' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Test completed at: $(date)" >> $GITHUB_STEP_SUMMARY

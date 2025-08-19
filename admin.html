@@ -549,7 +549,7 @@
                     <!-- Existing Groups Management -->
                     <div style="margin-top: 2rem;">
                         <h5 style="margin-bottom: 1rem; color: #2c2c2c;">Existing Groups</h5>
-                        <div id="groups-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+                        <div id="groups-list" style="width: 100%;">
                             <!-- Groups will be populated here -->
                         </div>
                     </div>
@@ -1289,43 +1289,68 @@
                 const groupsList = document.getElementById('groups-list');
                 if (!groupsList) return;
                 
-                groupsList.innerHTML = groups.map(group => `
-                    <div style="background: white; padding: 1.5rem; border: 1px solid #e5e5e5; border-radius: 4px;">
-                        <div style="margin-bottom: 1rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                                <h6 style="margin: 0; color: #2c2c2c; font-weight: 600; font-size: 1.1rem;">${group.charAt(0).toUpperCase() + group.slice(1)}</h6>
-                                <div style="display: flex; gap: 0.25rem;">
-                                    <button onclick="window.assessmentAnalytics.deleteGroup('${group}', false)" 
-                                            style="background: #ffc107; color: #212529; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer;"
-                                            title="Delete Group Only (fails if contains data)">Safe Delete</button>
-                                    <button onclick="window.assessmentAnalytics.deleteGroup('${group}', true)" 
-                                            style="background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer;"
-                                            title="Delete Group AND All Teams/Assessments">⚠️ Delete All</button>
+                groupsList.innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; width: 100%;">
+                        ${groups.map(group => `
+                            <div class="group-card" style="background: linear-gradient(135deg, #ffffff, #f8f9fa); border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.3s ease; position: relative; overflow: hidden;">
+                                
+                                <!-- Card Header -->
+                                <div style="padding: 1.5rem 1.5rem 1rem; background: linear-gradient(135deg, #c5b783, #8a7a4b); color: white; position: relative;">
+                                    <div style="position: absolute; top: 0.75rem; right: 0.75rem;">
+                                        <div class="dropdown" style="position: relative;">
+                                            <button onclick="toggleDropdown('${group}')" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.25rem 0.5rem; border-radius: 20px; font-size: 0.7rem; cursor: pointer; backdrop-filter: blur(5px);">
+                                                ⚙️
+                                            </button>
+                                            <div id="dropdown-${group}" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; background: white; border: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; min-width: 150px; margin-top: 0.5rem;">
+                                                <button onclick="copyGroupLinks('${group}'); toggleDropdown('${group}')" style="width: 100%; text-align: left; padding: 0.75rem; border: none; background: none; cursor: pointer; font-size: 0.8rem; color: #2c2c2c; border-radius: 8px 8px 0 0; transition: background 0.2s; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='none'">📋 Copy Links</button>
+                                                <button onclick="window.assessmentAnalytics.clearResults('${group}'); toggleDropdown('${group}')" style="width: 100%; text-align: left; padding: 0.75rem; border: none; background: none; cursor: pointer; font-size: 0.8rem; color: #fd7e14; transition: background 0.2s; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background='#fff4e6'" onmouseout="this.style.background='none'">🧹 Clear Results</button>
+                                                <button onclick="window.assessmentAnalytics.deleteGroup('${group}', false); toggleDropdown('${group}')" style="width: 100%; text-align: left; padding: 0.75rem; border: none; background: none; cursor: pointer; font-size: 0.8rem; color: #f57c00; transition: background 0.2s; border-bottom: 1px solid #f0f0f0;" onmouseover="this.style.background='#fff3e0'" onmouseout="this.style.background='none'">🛡️ Safe Delete</button>
+                                                <button onclick="window.assessmentAnalytics.deleteGroup('${group}', true); toggleDropdown('${group}')" style="width: 100%; text-align: left; padding: 0.75rem; border: none; background: none; cursor: pointer; font-size: 0.8rem; color: #dc3545; border-radius: 0 0 8px 8px; transition: background 0.2s;" onmouseover="this.style.background='#ffebee'" onmouseout="this.style.background='none'">⚠️ Delete All</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600;">${group.charAt(0).toUpperCase() + group.slice(1)}</h3>
+                                    <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; opacity: 0.9;">Assessment Group</p>
                                 </div>
+                                
+                                <!-- Quick Actions -->
+                                <div style="padding: 1.5rem; padding-top: 1rem;">
+                                    <div style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem;">
+                                        <a href="?group=${encodeURIComponent(group)}" style="flex: 1; background: linear-gradient(135deg, #28a745, #20c997); color: white; text-decoration: none; padding: 0.75rem; border-radius: 8px; text-align: center; font-size: 0.8rem; font-weight: 600; transition: all 0.2s; box-shadow: 0 2px 4px rgba(40,167,69,0.3);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(40,167,69,0.4)'" onmouseout="this.style.transform='none'; this.style.boxShadow='0 2px 4px rgba(40,167,69,0.3)'">
+                                            📊 View Results
+                                        </a>
+                                        <a href="/assess/${encodeURIComponent(group)}" target="_blank" style="flex: 1; background: linear-gradient(135deg, #6f42c1, #8e24aa); color: white; text-decoration: none; padding: 0.75rem; border-radius: 8px; text-align: center; font-size: 0.8rem; font-weight: 600; transition: all 0.2s; box-shadow: 0 2px 4px rgba(111,66,193,0.3);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(111,66,193,0.4)'" onmouseout="this.style.transform='none'; this.style.boxShadow='0 2px 4px rgba(111,66,193,0.3)'">
+                                            ✍️ Judge Form
+                                        </a>
+                                    </div>
+                                    
+                                    <!-- Email Configuration -->
+                                    <div style="background: rgba(197, 183, 131, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid rgba(197, 183, 131, 0.2);">
+                                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #2c2c2c; margin-bottom: 0.5rem;">📧 Email Notifications</label>
+                                        <input type="email" 
+                                               id="email-${group}" 
+                                               placeholder="professor@ivey.ca"
+                                               style="width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.8rem; box-sizing: border-box; background: white; transition: all 0.2s;"
+                                               value="${this.getGroupEmail(group)}"
+                                               onchange="window.assessmentAnalytics.updateGroupEmail('${group}', this.value)"
+                                               onkeypress="if(event.key==='Enter') { this.blur(); window.assessmentAnalytics.updateGroupEmail('${group}', this.value); }"
+                                               onfocus="this.style.borderColor='#c5b783'; this.style.boxShadow='0 0 0 3px rgba(197,183,131,0.1)'"
+                                               onblur="this.style.borderColor='#ddd'; this.style.boxShadow='none'">
+                                        <p style="font-size: 0.7rem; color: #666; margin: 0.5rem 0 0 0; line-height: 1.3;">Results emailed when assessments complete</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Hover Effect -->
+                                <style>
+                                    .group-card:hover {
+                                        transform: translateY(-2px);
+                                        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+                                    }
+                                </style>
                             </div>
-                            <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.85rem; color: #666;">
-                                <a href="?group=${encodeURIComponent(group)}" style="color: #c5b783; text-decoration: none;">View Group Results</a> •
-                                <a href="/assess/${encodeURIComponent(group)}" style="color: #28a745; text-decoration: none;" target="_blank">Assessment Link</a>
-                            </p>
-                        </div>
-                        
-                        <div style="margin-bottom: 1rem;">
-                            <label style="font-size: 0.9rem; font-weight: 600; color: #2c2c2c; display: block; margin-bottom: 0.25rem;">📧 Email Notifications:</label>
-                            <input type="email" 
-                                   id="email-${group}" 
-                                   placeholder="Enter email for results (e.g., professor@ivey.ca)"
-                                   style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem;"
-                                   value="${this.getGroupEmail(group)}"
-                                   onchange="window.assessmentAnalytics.updateGroupEmail('${group}', this.value)"
-                                   onkeypress="if(event.key==='Enter') { this.blur(); window.assessmentAnalytics.updateGroupEmail('${group}', this.value); }">
-                            <p style="font-size: 0.75rem; color: #666; margin: 0.25rem 0 0 0;">Results will be emailed here when judges complete assessments</p>
-                        </div>
-                        
-                        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                            <button onclick="copyGroupLinks('${group}')" class="btn-admin" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">📋 Copy Links</button>
-                        </div>
+                        `).join('')}
                     </div>
-                `).join('');
+                `;
             }
 
             showCreateGroupStatus(message, type) {
@@ -1412,6 +1437,39 @@
                     // Reset button
                     deleteButton.innerHTML = originalText;
                     deleteButton.disabled = false;
+                }
+            }
+
+            async clearResults(groupName) {
+                const confirmMessage = `🧹 CLEAR ALL RESULTS FOR GROUP "${groupName}"\n\n⚠️ This will permanently delete:\n   • ALL assessments for this group\n   • ALL team evaluation data\n\n✅ This will keep:\n   • The group itself\n   • Email notification settings\n   • Team roster (if any)\n\n💡 Use this to reset a group for reuse.\n\nType "CLEAR" to confirm:`;
+
+                const confirmed = prompt(confirmMessage) === 'CLEAR';
+                
+                if (!confirmed) return;
+
+                try {
+                    const response = await fetch(`/api/groups/${encodeURIComponent(groupName)}/clear`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        this.showCreateGroupStatus(`✅ SUCCESS: All results cleared for group "${groupName}"!\n\n${result.message}`, 'success');
+                        
+                        // Refresh the data to show updated counts
+                        await this.loadData();
+                        
+                    } else {
+                        this.showCreateGroupStatus(`❌ ERROR: ${result.error}`, 'error');
+                    }
+                    
+                } catch (error) {
+                    console.error('Clear results error:', error);
+                    this.showCreateGroupStatus(`❌ ERROR: Failed to clear results - ${error.message}`, 'error');
                 }
             }
 
@@ -1586,6 +1644,29 @@
                 }
             }
         }
+
+        // Global functions for group UI
+        function toggleDropdown(groupName) {
+            const dropdown = document.getElementById(`dropdown-${groupName}`);
+            const isVisible = dropdown.style.display === 'block';
+            
+            // Close all other dropdowns first
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                menu.style.display = 'none';
+            });
+            
+            // Toggle this dropdown
+            dropdown.style.display = isVisible ? 'none' : 'block';
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.style.display = 'none';
+                });
+            }
+        });
 
         // Global function for toggling details
         function toggleDetails(index) {
