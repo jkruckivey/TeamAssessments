@@ -627,7 +627,7 @@ function extractJudgeData(csvRows) {
         const judge2 = judge2Row[i] && judge2Row[i].trim();
         
         if (chair || judge1 || judge2) {
-            const judges = [chair, judge1, judge2].filter(Boolean);
+            const judges = [judge1, judge2].filter(Boolean);
             judgeGroups.push({
                 group: classroom.trim(),
                 chair: chair || null,
@@ -652,7 +652,7 @@ function updateJudgesFromTeams(teams, group) {
     const judgeInfo = {
         group: group,
         chair: firstTeam.chair || null,
-        judges: [firstTeam.chair, firstTeam.judge1, firstTeam.judge2].filter(Boolean),
+        judges: [firstTeam.judge1, firstTeam.judge2].filter(Boolean),
         createdAt: new Date().toISOString(),
         source: 'team_csv_upload'
     };
